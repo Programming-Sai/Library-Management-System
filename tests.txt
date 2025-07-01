@@ -1,0 +1,239 @@
+```ftt
+
+src/main/java/org/ebenlib/cli/
+│
+├─ CommandRouter.java         # Handles parsing args[] and routing to correct handler
+├─ InteractiveCLI.java        # Runs menu-driven CLI with color, paging, etc.
+├─ MenuPrinter.java           # Utility: handles colored text, menus, user input
+├─ LoginHandler.java          # Processes login (from CLI or interactive)
+└─ CommandArgs.java           # Utility: parses and stores --key=value args
+
+```
+
+
+
+Yes — I get exactly what you're saying.
+
+Since you're not allowed to use 3rd-party tools like JUnit, we'll test the app **manually through CLI**, but still follow a structured QA-style test plan. That means:
+
+- We'll test **signup**, then **signin**, then **signout**
+- We’ll also test edge cases like duplicate signup, incorrect password, etc.
+- Every test will be a command you can paste into the terminal
+- I’ll mark expected outputs so you can visually confirm things are working
+
+---
+
+## ✅ MANUAL TEST PLAN FOR AUTHENTICATION
+
+### 🧪 ENVIRONMENT PREP
+
+Before running these, ensure that no one is signed in:
+
+```bash
+del src\main\resources\session.dat
+```
+
+---
+
+## 🔐 1. SIGNUP TEST CASES
+
+---
+
+### ✅ 1.1 Signup with new user (valid)
+
+```bash
+./gradlew.bat run --quiet --args="auth signup -u admin -p 1234 --confirm-password 1234 --role Librarian"
+```
+
+**Expected Output:**
+
+```
+✅ Signup successful! You can now signin as admin (Librarian)
+```
+
+---
+
+### ❌ 1.2 Signup with username already taken
+
+```bash
+./gradlew.bat run --quiet --args="auth signup -u admin -p 1234 --confirm-password 1234"
+```
+
+**Expected Output:**
+
+```
+❌ That username is already taken.
+```
+
+---
+
+### ❌ 1.3 Signup with mismatched passwords
+
+```bash
+./gradlew.bat run --quiet --args="auth signup -u user1 -p pass1 --confirm-password wrongpass"
+```
+
+**Expected Output:**
+
+```
+❌ Password and confirm-password do not match.
+```
+
+---
+
+### ❌ 1.4 Signup with invalid role
+
+```bash
+./gradlew.bat run --quiet --args="auth signup -u user2 -p pass2 --confirm-password pass2 --role SuperAdmin"
+```
+
+**Expected Output:**
+
+```
+❌ Role must be either 'Reader' or 'Librarian'.
+```
+
+---
+
+## 🔑 2. SIGNIN TEST CASES
+
+---
+
+### ✅ 2.1 Signin with correct credentials
+
+```bash
+./gradlew.bat run --quiet --args="auth signin -u admin -p 1234"
+```
+
+**Expected Output:**
+
+```
+✅ Signin successful! Welcome, admin (Librarian)
+```
+
+---
+
+### ❌ 2.2 Signin when already signed in
+
+```bash
+./gradlew.bat run --quiet --args="auth signin -u user1 -p pass1"
+```
+
+**Expected Output:**
+
+```
+? A user is already signed in. Please sign out first.
+```
+
+---
+
+## 🚪 3. SIGNOUT TEST CASES
+
+---
+
+### ✅ 3.1 Signout while signed in
+
+```bash
+./gradlew.bat run --quiet --args="auth signout"
+```
+
+**Expected Output:**
+
+```
+👋 Signed out successfully.
+```
+
+---
+
+### ❌ 3.2 Signout when no user is signed in
+
+```bash
+./gradlew.bat run --quiet --args="auth signout"
+```
+
+**Expected Output:**
+
+```
+⚠️ No active session found. You're not signed in.
+```
+
+---
+
+## 🔁 4. SIGNIN AGAIN AFTER SIGNOUT
+
+---
+
+### ✅ 4.1 Signin again with a different user
+
+```bash
+./gradlew.bat run --quiet --args="auth signup -u user3 -p pass3 --confirm-password pass3"
+```
+
+```bash
+./gradlew.bat run --quiet --args="auth signin -u user3 -p pass3"
+```
+
+**Expected Output:**
+
+```
+✅ Signup successful!
+✅ Signin successful! Welcome, user3 (Reader)
+```
+
+---
+
+## ❓ 5. OTHER EDGE CASES
+
+---
+
+### ❌ 5.1 Missing required args on signin
+
+```bash
+./gradlew.bat run --quiet --args="auth signin -u user3"
+```
+
+**Expected Output:**
+
+```
+❌ Both -u/--username and -p/--password are required for signin.
+```
+
+---
+
+### ❌ 5.2 Invalid credentials
+
+```bash
+./gradlew.bat run --quiet --args="auth signin -u user3 -p wrongpass"
+```
+
+**Expected Output:**
+
+```
+❌ Signin failed: Invalid credentials.
+```
+
+---
+
+## 🧼 Cleanup (Optional)
+
+Delete session and users if needed for retesting:
+
+```bash
+del src\main\resources\session.dat
+del src\main\resources\users.csv
+```
+
+---
+
+## ✅ SUMMARY OF FEATURES TESTED
+
+| Feature        | Test Cases                               |
+| -------------- | ---------------------------------------- |
+| Signup         | Valid, duplicate, invalid role, mismatch |
+| Signin         | Valid, already signed in, invalid creds  |
+| Signout        | Signed in, not signed in                 |
+| Error Handling | Missing args, session control            |
+
+---
+
+Let me know when you're done running these and we can move to the **RBAC checks** or **menu system**.
