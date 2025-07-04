@@ -2,21 +2,24 @@ package org.ebenlib.cli;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.Console;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
+import java.util.Scanner;
 
 public class AuthHandler {
 
     private static final Path USER_FILE_PATH = Paths.get(
-        "src", "main", "resources", "users.csv"
+        "app", "src", "main", "resources", "users.csv"
     );
     private static final Path SESSION_FILE_PATH = Paths.get(
-        "src", "main", "resources", "session.txt"
+        "app", "src", "main", "resources", "session.txt"
     );
+    private static final Scanner fallbackScanner = new Scanner(System.in);
 
     public static void handle(String[] args, Map<String, String> opts) {
         if (args.length < 2) {
@@ -26,10 +29,14 @@ public class AuthHandler {
         String action = args[1];
         switch (action) {
             case "signin":
-                if (guardNoActiveSession()) handleSignin(opts);
+                if (guardNoActiveSession()) {
+                    interactiveSignin(false);
+                }
                 break;
             case "signup":
-                if (guardNoActiveSession()) handleSignup(opts);
+                if (guardNoActiveSession()) {
+                    interactiveSignup(false);
+                }
                 break;
             case "signout":
                 handleSignout();
@@ -40,68 +47,133 @@ public class AuthHandler {
         }
     }
 
-    private static void printHelp() {
-        System.out.println("📚 Usage: ebenlib auth [signin|signup|signout] [options]");
-        System.out.println("  signin  -u <username> -p <password>       (or --username, --password)");
-        System.out.println("  signup  -u <username> -p <password> -cp <confirmPassword> [-r <role>]");
-        System.out.println("  signout                                   Sign out of current session");
+    public static void printHelp() {
+        System.out.println("📚 Usage: ebenlib auth [signin|signup|signout]");
+        System.out.println("  signin   Prompt for username/password to log in");
+        System.out.println("  signup   Prompt for username, password, confirm and role to register");
+        System.out.println("  signout  Sign out of current session");
     }
 
-    private static void handleSignin(Map<String, String> opts) {
-        String user = firstNonNull(opts.get("u"), opts.get("username"));
-        String pass = firstNonNull(opts.get("p"), opts.get("password"));
-        if (user == null || pass == null) {
-            System.out.println("❌ Both -u/--username and -p/--password are required.");
-            return;
+    // —— INTERACTIVE SIGNIN ——
+    public static void interactiveSignin(boolean isInteractive) {
+    Console console = System.console();
+    String user;
+    char[] pwdChars;
+
+    try {
+        if (console != null) {
+            user = console.readLine("Username: ");
+            pwdChars = console.readPassword("Password: ");
+        } else {
+            System.out.print("Username: ");
+            if (!fallbackScanner.hasNextLine()) {
+                System.out.println("❌ No input available.");
+                return;
+            }
+            user = fallbackScanner.nextLine();
+
+            System.out.print("Password: ");
+            if (!fallbackScanner.hasNextLine()) {
+                System.out.println("❌ No input available.");
+                return;
+            }
+            pwdChars = fallbackScanner.nextLine().toCharArray();
         }
+
+        String pass = new String(pwdChars);
         String role = authenticate(user, pass);
         if (role != null) {
             saveSession(user, role);
             System.out.printf("✅ Signin successful! Welcome, %s (%s)%n", user, role);
+             if (isInteractive) {
+                InteractiveShell.clearScreen();
+                new InteractiveShell(user, role).run(InteractiveMenus.getMainMenu(role, user));
+            }
         } else {
             System.out.println("❌ Signin failed: Invalid credentials.");
         }
+    } catch (Exception e) {
+        System.out.println("❌ Input error: " + e.getMessage());
     }
+}
 
-    private static void handleSignup(Map<String, String> opts) {
-        String user = firstNonNull(opts.get("u"), opts.get("username"));
-        String pass = firstNonNull(opts.get("p"), opts.get("password"));
-        String cp   = firstNonNull(opts.get("cp"), opts.get("confirm-password"));
-        String role = firstNonNull(opts.get("r"), opts.get("role"));
-        if (role == null) role = "Reader";
 
-        if (user == null || pass == null || cp == null) {
-            System.out.println("❌ -u/--username, -p/--password and -cp/--confirm-password are required.");
+    // —— INTERACTIVE SIGNUP ——
+    public static void interactiveSignup(boolean isInteractive) {
+        Console console = System.console();
+        String user;
+        char[] pwd1, pwd2;
+        String role;
+        String roleInput;
+
+        if (console != null) {
+            user = console.readLine("Choose a username: ");
+            pwd1 = console.readPassword("Choose a password: ");
+            pwd2 = console.readPassword("Confirm password: ");
+
+            System.out.println("Choose role:");
+            System.out.println("  1. Librarian");
+            System.out.println("  2. Reader");
+            System.out.print(">> ");
+            roleInput = console.readLine(">> ");
+        } else {
+            System.out.print("Choose a username: ");
+            user = fallbackScanner.nextLine();
+            System.out.print("Choose a password: ");
+            pwd1 = fallbackScanner.nextLine().toCharArray();
+            System.out.print("Confirm password: ");
+            pwd2 = fallbackScanner.nextLine().toCharArray();
+
+            System.out.println("Choose role:");
+            System.out.println("  1. Librarian");
+            System.out.println("  2. Reader");
+            System.out.print(">> ");
+            roleInput = fallbackScanner.nextLine();
+        }
+
+        if (!new String(pwd1).equals(new String(pwd2))) {
+            System.out.println("❌ Passwords do not match.");
             return;
         }
-        if (!pass.equals(cp)) {
-            System.out.println("❌ Password and confirm-password do not match.");
-            return;
+
+        if (roleInput == null) roleInput = "";
+
+        switch (roleInput.strip()) {
+            case "1" -> role = "Librarian";
+            case "2", "" -> role = "Reader"; // default
+            default -> {
+                System.out.println("❌ Invalid selection. Please choose 1 or 2.");
+                return;
+            }
         }
-        if (!role.equals("Reader") && !role.equals("Librarian")) {
-            System.out.println("❌ Role must be either 'Reader' or 'Librarian'.");
-            return;
-        }
-        try {
-            Files.createDirectories(USER_FILE_PATH.getParent());
-            if (!Files.exists(USER_FILE_PATH)) Files.createFile(USER_FILE_PATH);
-        } catch (IOException ignored) {}
+
         if (userExists(user)) {
             System.out.println("❌ That username is already taken.");
             return;
         }
-        try (BufferedWriter writer = Files.newBufferedWriter(USER_FILE_PATH, StandardOpenOption.APPEND)) {
-            writer.write(String.join(",", user, pass, role));
-            writer.newLine();
+
+        // Persist new user
+        try {
+            Files.createDirectories(USER_FILE_PATH.getParent());
+            if (!Files.exists(USER_FILE_PATH)) Files.createFile(USER_FILE_PATH);
+            try (BufferedWriter writer = Files.newBufferedWriter(USER_FILE_PATH, StandardOpenOption.APPEND)) {
+                writer.write(String.join(",", user, new String(pwd1), role));
+                writer.newLine();
+            }
             saveSession(user, role);
-            System.out.printf("✅ Signup successful! You can now signin as %s (%s)%n", user, role);
+            System.out.printf("✅ Signup successful! You are now logged in as %s (%s)%n", user, role);
+             if (isInteractive) {
+                InteractiveShell.clearScreen();
+                new InteractiveShell(user, role).run(InteractiveMenus.getMainMenu(role, user));
+            }
         } catch (IOException e) {
             System.out.println("⚠️ Failed to register user: " + e.getMessage());
         }
     }
 
+
     // —— SIGNOUT ——
-    private static void handleSignout() {
+    public static void handleSignout() {
         if (!Files.exists(SESSION_FILE_PATH)) {
             System.out.println("❌ No active session.");
             return;
@@ -131,15 +203,24 @@ public class AuthHandler {
         }
     }
 
-    public static String getCurrentUser() {
+    public static User getCurrentUser() {
         if (!Files.exists(SESSION_FILE_PATH)) return null;
+
         try (BufferedReader reader = Files.newBufferedReader(SESSION_FILE_PATH)) {
             String line = reader.readLine();
-            return line != null ? line.split(",")[0] : null;
+            if (line != null) {
+                String[] parts = line.strip().split(",");
+                if (parts.length == 2) {
+                    return new User(parts[0], parts[1]);
+                }
+            }
         } catch (IOException e) {
-            return null;
+            // Log or handle error if needed
         }
+
+        return null;
     }
+
 
     private static boolean userExists(String username) {
         try (BufferedReader reader = Files.newBufferedReader(USER_FILE_PATH)) {
@@ -152,6 +233,10 @@ public class AuthHandler {
     }
 
     private static String authenticate(String username, String password) {
+        if (!Files.exists(USER_FILE_PATH)) {
+            System.out.println("⚠️ User Not Found. Please signup first.");
+            return null;
+        }
         try (BufferedReader reader = Files.newBufferedReader(USER_FILE_PATH)) {
             String line;
             while ((line = reader.readLine()) != null) {
@@ -165,8 +250,8 @@ public class AuthHandler {
         }
         return null;
     }
+} 
 
-    private static String firstNonNull(String... values) {
-        for (String v : values) if (v != null) return v;  return null;
-    }
-}
+
+
+
