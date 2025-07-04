@@ -9,16 +9,17 @@ import java.util.Map;
 import java.util.Scanner;
 
 public class InteractiveShell {
-    private final String username;
-    private final String role;
+    // private final String username;
+    // private final String role;
+    public static final Scanner scanner = new Scanner(System.in);
 
-    public InteractiveShell(String username, String role) {
-        this.username = username;
-        this.role = role;
-    }
+    // public InteractiveShell(String username, String role) {
+        // this.username = username;
+        // this.role = role;
+    // }
 
     public void run(Map<String, Runnable> menu) {
-        Scanner scanner = new Scanner(System.in);
+        // Scanner scanner = new Scanner(System.in);
         while (true) {
             clearScreen();
             System.out.println("\nPlease choose an option:");
