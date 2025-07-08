@@ -84,6 +84,9 @@ public class CommandRouter {
                     System.out.println("[REPORT] Stub: report " + args[1] + " invoked with options " + options);
                 }
                 break;
+            case "test":
+                ConsoleThemeTest.main(args);
+                break;
 
             default:
                 System.out.println("❌ Unknown command: " + command);
