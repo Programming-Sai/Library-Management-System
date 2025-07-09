@@ -1,7 +1,11 @@
 package org.ebenlib.cli;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import org.ebenlib.cli.ConsoleUI.Colorizer;
 
 public class CommandRouter {
 
@@ -87,6 +91,12 @@ public class CommandRouter {
             case "test":
                 ConsoleThemeTest.main(args);
                 break;
+            case "--help":
+                printHelp();;
+                break;
+            case "-h":
+                printHelp();;
+                break;
 
             default:
                 System.out.println("❌ Unknown command: " + command);
@@ -95,16 +105,79 @@ public class CommandRouter {
     }
 
     private static void printHelp() {
-        System.out.println("📚 EbenLib CLI Help:");
-        System.out.println("  --interactive                      Enter interactive mode");
-        System.out.println("  auth    [signin|signup|signout]    User authentication");
-        System.out.println("  user    [list|delete|promote...]   User management (Admin)");
-        System.out.println("  book    [add|delete|update|list...] Book management (Librarian)");
-        System.out.println("  borrow  [request|return|list|history] Borrowing system");
-        System.out.println("  profile [view|update|password]     Account profile actions");
-        System.out.println("  system  [init|stats]               System-level commands");
-    }
+            // build a 30° slanted gradient from BLUE → CYAN → PURPLE
+            List<String> gradient = Arrays.asList(ConsoleUI.BLUE, ConsoleUI.CYAN, ConsoleUI.PURPLE);
+            Colorizer colorFn = ConsoleUI.gradientColorizer(gradient, 30);
 
+            // render our ASCII logo in gradient
+            ConsoleUI.printLogo(colorFn);
+            ConsoleUI.header(" EbenLib CLI — Command Reference ");
+
+            ConsoleUI.println("Usage:", ConsoleUI.BOLD);
+            ConsoleUI.println("  ebenlib <command> [options]\n", ConsoleUI.WHITE);
+
+            ConsoleUI.println("Available Commands:", ConsoleUI.UNDERLINE);
+
+            ConsoleUI.println("  --interactive", ConsoleUI.BRIGHT_CYAN);
+            ConsoleUI.println("      Launch interactive TUI mode\n", ConsoleUI.WHITE);
+
+            ConsoleUI.println("  auth [signin|signup|signout]", ConsoleUI.BRIGHT_CYAN);
+            ConsoleUI.println("      signin    Sign in", ConsoleUI.WHITE);
+            ConsoleUI.println("      signup    Register", ConsoleUI.WHITE);
+            ConsoleUI.println("      signout   Logout\n", ConsoleUI.WHITE);
+
+            ConsoleUI.println("  user [list|delete|promote|demote|suspend|activate]", ConsoleUI.BRIGHT_CYAN);
+            ConsoleUI.println("      list      List users", ConsoleUI.WHITE);
+            ConsoleUI.println("      delete    Remove a user", ConsoleUI.WHITE);
+            ConsoleUI.println("      promote   Make user a Librarian", ConsoleUI.WHITE);
+            ConsoleUI.println("      demote    Revoke Librarian role", ConsoleUI.WHITE);
+            ConsoleUI.println("      suspend   Disable account", ConsoleUI.WHITE);
+            ConsoleUI.println("      activate  Re-enable account\n", ConsoleUI.WHITE);
+
+            ConsoleUI.println("  book [add|update|delete|list|search|stats]", ConsoleUI.BRIGHT_CYAN);
+            ConsoleUI.println("      add       Add new book", ConsoleUI.WHITE);
+            ConsoleUI.println("      update    Edit book details", ConsoleUI.WHITE);
+            ConsoleUI.println("      delete    Delete book", ConsoleUI.WHITE);
+            ConsoleUI.println("      list      Show inventory", ConsoleUI.WHITE);
+            ConsoleUI.println("      search    Find books", ConsoleUI.WHITE);
+            ConsoleUI.println("      stats     Book analytics\n", ConsoleUI.WHITE);
+
+            ConsoleUI.println("  borrow [request|approve|reject|return|list|history]", ConsoleUI.BRIGHT_CYAN);
+            ConsoleUI.println("      request   Borrow a book", ConsoleUI.WHITE);
+            ConsoleUI.println("      approve   Approve request", ConsoleUI.WHITE);
+            ConsoleUI.println("      reject    Reject request", ConsoleUI.WHITE);
+            ConsoleUI.println("      return    Return a book", ConsoleUI.WHITE);
+            ConsoleUI.println("      list      Active requests", ConsoleUI.WHITE);
+            ConsoleUI.println("      history   Past transactions\n", ConsoleUI.WHITE);
+
+            ConsoleUI.println("  profile [view|update|password]", ConsoleUI.BRIGHT_CYAN);
+            ConsoleUI.println("      view      Show your profile", ConsoleUI.WHITE);
+            ConsoleUI.println("      update    Change username", ConsoleUI.WHITE);
+            ConsoleUI.println("      password  Change password\n", ConsoleUI.WHITE);
+
+            ConsoleUI.println("  system [init|stats|overdue|report]", ConsoleUI.BRIGHT_CYAN);
+            ConsoleUI.println("      init      Bootstrap/reset system", ConsoleUI.WHITE);
+            ConsoleUI.println("      stats     Show system metrics", ConsoleUI.WHITE);
+            ConsoleUI.println("      overdue   List overdue items", ConsoleUI.WHITE);
+            ConsoleUI.println("      report    Generate reports\n", ConsoleUI.WHITE);
+
+            ConsoleUI.println("  report [top-borrowed|top-fines|category-distribution]", ConsoleUI.BRIGHT_CYAN);
+            ConsoleUI.println("      top-borrowed            Most borrowed books", ConsoleUI.WHITE);
+            ConsoleUI.println("      top-fines               Highest fines owed", ConsoleUI.WHITE);
+            ConsoleUI.println("      category-distribution   Inventory by category\n", ConsoleUI.WHITE);
+
+            ConsoleUI.println("  test", ConsoleUI.BRIGHT_CYAN);
+            ConsoleUI.println("      Run the built‑in UI demo & tests\n", ConsoleUI.WHITE);
+
+            ConsoleUI.println("  -h, --help", ConsoleUI.BRIGHT_CYAN);
+            ConsoleUI.println("      Show this help screen\n", ConsoleUI.WHITE);
+
+            ConsoleUI.header(" Examples ");
+            ConsoleUI.println("  ebenlib auth signin", ConsoleUI.WHITE);
+            ConsoleUI.println("  ebenlib book list",   ConsoleUI.WHITE);
+            ConsoleUI.println("  ebenlib --interactive", ConsoleUI.WHITE);
+        }
+        
     // Parse both short (-u val) and long (--username=val) style arguments
     private static Map<String, String> parseOptions(String[] args) {
         Map<String, String> options = new HashMap<>();

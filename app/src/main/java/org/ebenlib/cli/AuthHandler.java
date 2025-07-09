@@ -9,7 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
-import java.util.Scanner;
+// import java.util.Scanner;
 
 public class AuthHandler {
 
@@ -19,7 +19,7 @@ public class AuthHandler {
     private static final Path SESSION_FILE_PATH = Paths.get(
         "app", "src", "main", "resources", "session.txt"
     );
-    private static final Scanner fallbackScanner = new Scanner(System.in);
+    // private static final Scanner fallbackScanner = new Scanner(System.in);
 
     public static void handle(String[] args, Map<String, String> opts) {
         if (args.length < 2) {
@@ -42,153 +42,132 @@ public class AuthHandler {
                 handleSignout();
                 break;
             default:
-                System.out.println("❌ Unknown auth action: " + action);
+                ConsoleUI.error("Unknown auth action: " + action);
                 printHelp();
         }
     }
 
     public static void printHelp() {
-        System.out.println("📚 Usage: ebenlib auth [signin|signup|signout]");
-        System.out.println("  signin   Prompt for username/password to log in");
-        System.out.println("  signup   Prompt for username, password, confirm and role to register");
-        System.out.println("  signout  Sign out of current session");
+        ConsoleUI.header("📚 Usage: ebenlib auth [signin|signup|signout]");
+        ConsoleUI.info("signin   Prompt for username/password to log in");
+        ConsoleUI.info("signup   Prompt for username, password, confirm and role to register");
+        ConsoleUI.info("signout  Sign out of current session");
     }
 
     // —— INTERACTIVE SIGNIN ——
     public static void interactiveSignin(boolean isInteractive) {
-    Console console = System.console();
-    String user;
-    char[] pwdChars;
+        Console console = System.console();
+        String user;
+        char[] pwdChars;
 
-    try {
-        if (console != null) {
-            user = console.readLine("Username: ");
-            pwdChars = console.readPassword("Password: ");
-        } else {
-            System.out.print("Username: ");
-            if (!fallbackScanner.hasNextLine()) {
-                System.out.println("❌ No input available.");
-                return;
+        try {
+            // read username/password
+            if (console != null) {
+                user = console.readLine("Username: ");
+                pwdChars = console.readPassword("Password: ");
+            } else {
+                user = ConsoleUI.prompt("Username:");
+                pwdChars = ConsoleUI.prompt("Password:").toCharArray();
             }
-            user = fallbackScanner.nextLine();
 
-            System.out.print("Password: ");
-            if (!fallbackScanner.hasNextLine()) {
-                System.out.println("❌ No input available.");
-                return;
+            // authenticate
+            String pass = new String(pwdChars);
+            String role = authenticate(user, pass);
+            if (role != null) {
+                saveSession(user, role);
+                ConsoleUI.success("Signin successful! Welcome, " + user + " (" + role + ")");
+                if (isInteractive) {
+                    InteractiveShell.clearScreen();
+                    new InteractiveShell(user, role)
+                        .run(InteractiveMenus.getMainMenu(role, user));
+                }
+            } else {
+                ConsoleUI.error("Signin failed: Invalid credentials.");
             }
-            pwdChars = fallbackScanner.nextLine().toCharArray();
+        } catch (Exception e) {
+            ConsoleUI.error("Input error: " + e.getMessage());
         }
-
-        String pass = new String(pwdChars);
-        String role = authenticate(user, pass);
-        if (role != null) {
-            saveSession(user, role);
-            System.out.printf("✅ Signin successful! Welcome, %s (%s)%n", user, role);
-             if (isInteractive) {
-                InteractiveShell.clearScreen();
-                new InteractiveShell(user, role).run(InteractiveMenus.getMainMenu(role, user));
-            }
-        } else {
-            System.out.println("❌ Signin failed: Invalid credentials.");
-        }
-    } catch (Exception e) {
-        System.out.println("❌ Input error: " + e.getMessage());
     }
-}
-
 
     // —— INTERACTIVE SIGNUP ——
     public static void interactiveSignup(boolean isInteractive) {
         Console console = System.console();
         String user;
         char[] pwd1, pwd2;
-        String role;
         String roleInput;
+        String role;
 
+        // read fields
         if (console != null) {
             user = console.readLine("Choose a username: ");
             pwd1 = console.readPassword("Choose a password: ");
             pwd2 = console.readPassword("Confirm password: ");
-
-            System.out.println("Choose role:");
-            System.out.println("  1. Librarian");
-            System.out.println("  2. Reader");
-            System.out.print(">> ");
+            ConsoleUI.info("Choose role: 1. Librarian   2. Reader (default)");
             roleInput = console.readLine(">> ");
         } else {
-            System.out.print("Choose a username: ");
-            user = fallbackScanner.nextLine();
-            System.out.print("Choose a password: ");
-            pwd1 = fallbackScanner.nextLine().toCharArray();
-            System.out.print("Confirm password: ");
-            pwd2 = fallbackScanner.nextLine().toCharArray();
-
-            System.out.println("Choose role:");
-            System.out.println("  1. Librarian");
-            System.out.println("  2. Reader");
-            System.out.print(">> ");
-            roleInput = fallbackScanner.nextLine();
+            user = ConsoleUI.prompt("Choose a username:");
+            pwd1 = ConsoleUI.prompt("Choose a password:").toCharArray();
+            pwd2 = ConsoleUI.prompt("Confirm password:").toCharArray();
+            ConsoleUI.info("Choose role: \t1. Librarian   \n\t2. Reader (default)");
+            roleInput = ConsoleUI.prompt(">>");
         }
 
+        // validate
         if (!new String(pwd1).equals(new String(pwd2))) {
-            System.out.println("❌ Passwords do not match.");
+            ConsoleUI.error("Passwords do not match.");
             return;
         }
-
-        if (roleInput == null) roleInput = "";
-
         switch (roleInput.strip()) {
             case "1" -> role = "Librarian";
-            case "2", "" -> role = "Reader"; // default
+            case "2", "" -> role = "Reader";
             default -> {
-                System.out.println("❌ Invalid selection. Please choose 1 or 2.");
+                ConsoleUI.error("Invalid selection. Please choose 1 or 2.");
                 return;
             }
         }
-
         if (userExists(user)) {
-            System.out.println("❌ That username is already taken.");
+            ConsoleUI.error("That username is already taken.");
             return;
         }
 
-        // Persist new user
+        // persist
         try {
             Files.createDirectories(USER_FILE_PATH.getParent());
             if (!Files.exists(USER_FILE_PATH)) Files.createFile(USER_FILE_PATH);
-            try (BufferedWriter writer = Files.newBufferedWriter(USER_FILE_PATH, StandardOpenOption.APPEND)) {
+            try (BufferedWriter writer = Files.newBufferedWriter(
+                    USER_FILE_PATH, StandardOpenOption.APPEND)) {
                 writer.write(String.join(",", user, new String(pwd1), role));
                 writer.newLine();
             }
             saveSession(user, role);
-            System.out.printf("✅ Signup successful! You are now logged in as %s (%s)%n", user, role);
-             if (isInteractive) {
+            ConsoleUI.success("Signup successful! You are now logged in as " + user + " (" + role + ")");
+            if (isInteractive) {
                 InteractiveShell.clearScreen();
-                new InteractiveShell(user, role).run(InteractiveMenus.getMainMenu(role, user));
+                new InteractiveShell(user, role)
+                    .run(InteractiveMenus.getMainMenu(role, user));
             }
         } catch (IOException e) {
-            System.out.println("⚠️ Failed to register user: " + e.getMessage());
+            ConsoleUI.warning("Failed to register user: " + e.getMessage());
         }
     }
-
 
     // —— SIGNOUT ——
     public static void handleSignout() {
         if (!Files.exists(SESSION_FILE_PATH)) {
-            System.out.println("❌ No active session.");
+            ConsoleUI.error("No active session.");
             return;
         }
         try {
             Files.delete(SESSION_FILE_PATH);
-            System.out.println("👋 You have been signed out.");
+            ConsoleUI.success("You have been signed out.");
         } catch (IOException e) {
-            System.out.println("⚠️ Failed to clear session: " + e.getMessage());
+            ConsoleUI.warning("Failed to clear session: " + e.getMessage());
         }
     }
 
     private static boolean guardNoActiveSession() {
         if (Files.exists(SESSION_FILE_PATH)) {
-            System.out.println("❌ A user is already signed in. Please sign out first.");
+            ConsoleUI.error("A user is already signed in. Please sign out first.");
             return false;
         }
         return true;
@@ -196,36 +175,31 @@ public class AuthHandler {
 
     private static void saveSession(String username, String role) {
         try (BufferedWriter writer = Files.newBufferedWriter(
-                 SESSION_FILE_PATH, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+                SESSION_FILE_PATH, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
             writer.write(username + "," + role);
         } catch (IOException e) {
-            System.out.println("⚠️ Failed to save session: " + e.getMessage());
+            ConsoleUI.warning("Failed to save session: " + e.getMessage());
         }
     }
 
+    /** Read the current user from session file. */
     public static User getCurrentUser() {
         if (!Files.exists(SESSION_FILE_PATH)) return null;
-
-        try (BufferedReader reader = Files.newBufferedReader(SESSION_FILE_PATH)) {
-            String line = reader.readLine();
-            if (line != null) {
-                String[] parts = line.strip().split(",");
-                if (parts.length == 2) {
-                    return new User(parts[0], parts[1]);
-                }
-            }
-        } catch (IOException e) {
-            // Log or handle error if needed
+        try (BufferedReader r = Files.newBufferedReader(SESSION_FILE_PATH)) {
+            String[] parts = r.readLine().strip().split(",");
+            return new User(parts[0], parts[1]);
+        } catch (Exception e) {
+            // ignore
         }
-
         return null;
     }
 
+    // —— HELPERS ——
 
     private static boolean userExists(String username) {
-        try (BufferedReader reader = Files.newBufferedReader(USER_FILE_PATH)) {
+        try (BufferedReader r = Files.newBufferedReader(USER_FILE_PATH)) {
             String line;
-            while ((line = reader.readLine()) != null) {
+            while ((line = r.readLine()) != null) {
                 if (line.startsWith(username + ",")) return true;
             }
         } catch (IOException ignored) {}
@@ -234,24 +208,19 @@ public class AuthHandler {
 
     private static String authenticate(String username, String password) {
         if (!Files.exists(USER_FILE_PATH)) {
-            System.out.println("⚠️ User Not Found. Please signup first.");
+            ConsoleUI.warning("User file not found. Please signup first.");
             return null;
         }
-        try (BufferedReader reader = Files.newBufferedReader(USER_FILE_PATH)) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.strip().split(",");
-                if (parts.length == 3 && parts[0].equals(username) && parts[1].equals(password)) {
+        try (BufferedReader r = Files.newBufferedReader(USER_FILE_PATH)) {
+            String[] parts;
+            while ((parts = r.readLine().strip().split(",")).length == 3) {
+                if (parts[0].equals(username) && parts[1].equals(password)) {
                     return parts[2];
                 }
             }
         } catch (IOException e) {
-            System.out.println("⚠️ Failed to read user data: " + e.getMessage());
+            ConsoleUI.warning("Failed to read user data: " + e.getMessage());
         }
         return null;
     }
-} 
-
-
-
-
+}

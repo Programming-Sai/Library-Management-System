@@ -20,29 +20,30 @@ public class TablePrinter {
         return lines;
     }
 
-    // Format a row into multiple lines (wrapped per cell)
-    private static List<String> formatRow(String[] row, String rowColor) {
+    // Format a row into wrapped lines with correct column widths
+    private static List<String> formatRow(String[] row, String rowColor, int[] colWidths) {
         List<List<String>> wrappedCells = new ArrayList<>();
         int maxLines = 0;
 
-        // Wrap each cell and store wrapped lines
-        for (String cell : row) {
-            List<String> lines = wrapText(cell == null ? "" : cell, COLUMN_WIDTH);
+        for (int i = 0; i < row.length; i++) {
+            int width = i < colWidths.length ? colWidths[i] : COLUMN_WIDTH;
+            List<String> lines = wrapText(row[i] == null ? "" : row[i], width);
             wrappedCells.add(lines);
             maxLines = Math.max(maxLines, lines.size());
         }
 
         List<String> formattedLines = new ArrayList<>();
 
-        // Compose each line for the row
-        for (int i = 0; i < maxLines; i++) {
+        for (int lineIndex = 0; lineIndex < maxLines; lineIndex++) {
             StringBuilder line = new StringBuilder("|");
-            for (List<String> cellLines : wrappedCells) {
-                String cellLine = (i < cellLines.size()) ? cellLines.get(i) : "";
+            for (int colIndex = 0; colIndex < wrappedCells.size(); colIndex++) {
+                int width = colIndex < colWidths.length ? colWidths[colIndex] : COLUMN_WIDTH;
+                List<String> lines = wrappedCells.get(colIndex);
+                String cellLine = (lineIndex < lines.size()) ? lines.get(lineIndex) : "";
                 line.append(" ")
                     .append(rowColor)
-                    .append(String.format("%-" + COLUMN_WIDTH + "s", cellLine))
-                    .append(ConsoleTheme.RESET)
+                    .append(String.format("%-" + width + "s", cellLine))
+                    .append(ConsoleUI.RESET)
                     .append(" |");
             }
             formattedLines.add(line.toString());
@@ -51,25 +52,36 @@ public class TablePrinter {
         return formattedLines;
     }
 
-    public static void printHeader(String[] headers) {
+
+    public static void printHeader(String[] headers, int[] colWidths) {
         StringBuilder row = new StringBuilder("|");
-        for (String header : headers) {
+
+        for (int i = 0; i < headers.length; i++) {
+            int width = colWidths[i];
             row.append(" ")
-               .append(ConsoleTheme.BOLD)
-               .append(String.format("%-" + COLUMN_WIDTH + "s", header))
-               .append(ConsoleTheme.RESET)
+               .append(ConsoleUI.BOLD)
+               .append(String.format("%-" + width + "s", headers[i]))
+               .append(ConsoleUI.RESET)
                .append(" |");
         }
         System.out.println(row.toString());
 
         String divider = "+";
         for (int i = 0; i < headers.length; i++) {
-            divider += "-".repeat(COLUMN_WIDTH + 2) + "+";
+            divider += "-".repeat(colWidths[i] + 2) + "+";
         }
         System.out.println(divider);
     }
 
-    public static void printTable(List<String[]> rows, int pageSize) {
+        public static void printHeader(String[] headers) {
+            int[] widths = new int[headers.length];
+            for (int i = 0; i < headers.length; i ++){
+                widths[i] = COLUMN_WIDTH;
+            }
+            printHeader(headers, widths);
+        }
+
+    public static void printTable(List<String[]> rows, int pageSize, int[] colWidths) {
         int total = rows.size();
         int current = 0;
 
@@ -78,8 +90,8 @@ public class TablePrinter {
 
             for (int i = current; i < end; i++) {
                 String[] row = rows.get(i);
-                String rowColor = (i % 2 == 0) ? ConsoleTheme.WHITE : ConsoleTheme.BG_BRIGHT_BLACK + ConsoleTheme.WHITE;
-                List<String> formattedLines = formatRow(row, rowColor);
+                String rowColor = (i % 2 == 0) ? ConsoleUI.WHITE : ConsoleUI.BG_BRIGHT_BLACK + ConsoleUI.WHITE;
+                List<String> formattedLines = formatRow(row, rowColor, colWidths);
                 for (String line : formattedLines) {
                     System.out.println(line);
                 }
@@ -88,7 +100,7 @@ public class TablePrinter {
             current = end;
 
             if (current < total) {
-                System.out.print(ConsoleTheme.YELLOW + "-- More (ENTER to continue, Q to quit) -- " + ConsoleTheme.RESET);
+                System.out.print(ConsoleUI.YELLOW + "-- More (ENTER to continue, Q to quit) -- " + ConsoleUI.RESET);
                 String input = scanner.nextLine().trim().toLowerCase();
                 System.out.print("\u001B[1A"); // Move up
                 System.out.print("\u001B[2K"); // Clear line
@@ -98,6 +110,18 @@ public class TablePrinter {
     }
 
     public static void printTable(List<String[]> rows) {
-        printTable(rows, DEFAULT_PAGE_SIZE);
+        int[] widths = new int[rows.size()];
+        for (int i = 0; i < rows.size(); i ++){
+            widths[i] = COLUMN_WIDTH;
+        }
+        printTable(rows, DEFAULT_PAGE_SIZE, widths);
+    }
+
+    public static void printTable(List<String[]> rows, int pageSize) {
+        int[] widths = new int[rows.size()];
+        for (int i = 0; i < rows.size(); i ++){
+            widths[i] = COLUMN_WIDTH;
+        }
+        printTable(rows, DEFAULT_PAGE_SIZE, widths);
     }
 }
