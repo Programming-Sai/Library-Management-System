@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.ebenlib.book.BookHandler;
+import org.ebenlib.borrow.BorrowHandler;
 import org.ebenlib.cli.ConsoleUI.Colorizer;
 
 public class CommandRouter {
@@ -80,15 +82,11 @@ public class CommandRouter {
                 } else {
                     System.out.println("[BOOK] Stub: book " + args[1] + " invoked with options " + options);
                 }
+                BookHandler.handle(args, options);
                 break;
 
             case "borrow":
-                // Borrowing management stubs
-                if (args.length < 2) {
-                    System.out.println("[BORROW] No action specified. Available: request, approve, reject, return, list, history");
-                } else {
-                    System.out.println("[BORROW] Stub: borrow " + args[1] + " invoked with options " + options);
-                }
+                BorrowHandler.handle(args, options);
                 break;
 
             case "profile":
@@ -175,17 +173,18 @@ public class CommandRouter {
             ConsoleUI.println("      add       Add new book", ConsoleUI.WHITE);
             ConsoleUI.println("      update    Edit book details", ConsoleUI.WHITE);
             ConsoleUI.println("      delete    Delete book", ConsoleUI.WHITE);
+            ConsoleUI.println("      stats     Book analytics\n", ConsoleUI.WHITE);
             ConsoleUI.println("      list      Show inventory", ConsoleUI.WHITE);
             ConsoleUI.println("      search    Find books", ConsoleUI.WHITE);
-            ConsoleUI.println("      stats     Book analytics\n", ConsoleUI.WHITE);
 
-            ConsoleUI.println("  borrow [request|approve|reject|return|list|history]", ConsoleUI.BRIGHT_CYAN);
-            ConsoleUI.println("      request   Borrow a book", ConsoleUI.WHITE);
-            ConsoleUI.println("      approve   Approve request", ConsoleUI.WHITE);
-            ConsoleUI.println("      reject    Reject request", ConsoleUI.WHITE);
-            ConsoleUI.println("      return    Return a book", ConsoleUI.WHITE);
-            ConsoleUI.println("      list      Active requests", ConsoleUI.WHITE);
-            ConsoleUI.println("      history   Past transactions\n", ConsoleUI.WHITE);
+            ConsoleUI.println("  borrow [request|approve|reject|return|list|history|all-history]", ConsoleUI.BRIGHT_CYAN);
+            ConsoleUI.println("      request        Borrow a book", ConsoleUI.WHITE);
+            ConsoleUI.println("      list           Active requests", ConsoleUI.WHITE);
+            ConsoleUI.println("      all-history    Past transactions of all users.", ConsoleUI.WHITE);
+            ConsoleUI.println("      approve        Approve request", ConsoleUI.WHITE);
+            ConsoleUI.println("      reject         Reject request", ConsoleUI.WHITE);
+            ConsoleUI.println("      return         Return a book", ConsoleUI.WHITE);
+            ConsoleUI.println("      history        Past transactions\n", ConsoleUI.WHITE);
 
             ConsoleUI.println("  profile [view|update|password]", ConsoleUI.BRIGHT_CYAN);
             ConsoleUI.println("      view      Show your profile", ConsoleUI.WHITE);

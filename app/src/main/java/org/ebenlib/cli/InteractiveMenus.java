@@ -4,6 +4,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.ebenlib.borrow.BorrowHandler;
+
 public class InteractiveMenus {
 
     public static final Set<String> NAVIGATION_COMMANDS = Set.of(
@@ -51,8 +53,10 @@ public class InteractiveMenus {
             menu.put("Add Book",    () -> runWithPause(() -> stub("Add Book")));
             menu.put("Delete Book", () -> runWithPause(() -> stub("Delete Book")));
             menu.put("Update Book", () -> runWithPause(() -> stub("Update Book")));
+            menu.put("Stats and Analytics", () -> runWithPause(() -> stub("Stats and Analytics")));
         }
         menu.put("List Books", () -> runWithPause(() -> stub("List Books")));
+        menu.put("Search Books", () -> runWithPause(() -> stub("Search Books")));
         menu.put("Back",       () -> {});
         menu.put("Exit",       () -> System.exit(0));
         return menu;
@@ -61,12 +65,14 @@ public class InteractiveMenus {
     public static Map<String, Runnable> getBorrowMenu(String role) {
         Map<String, Runnable> menu = new LinkedHashMap<>();
         if (role.equalsIgnoreCase("Librarian")) {
-            menu.put("Approve Request", () -> runWithPause(() -> stub("Approve Request")));
-            menu.put("Reject Request",  () -> runWithPause(() -> stub("Reject Request")));
-        }
-        menu.put("Request Book",   () -> runWithPause(() -> stub("Request Book")));
-        menu.put("Return Book",    () -> runWithPause(() -> stub("Return Book")));
-        menu.put("Borrow History", () -> runWithPause(() -> stub("Borrow History")));
+            menu.put("List All Pending Borrow Requests",    () -> runWithPause(() -> BorrowHandler.handleList(Map.of("status","PENDING"))));
+            menu.put("List All Borrow Operations",    () -> runWithPause(() -> BorrowHandler.handleHistory(Map.of(), true)));
+            menu.put("Approve Borrow Request",    () -> runWithPause(() -> BorrowHandler.interactiveApproveReject()));
+            menu.put("Reject Borrow Request",    () -> runWithPause(() -> BorrowHandler.interactiveApproveReject()));
+        }   
+        menu.put("Request Book To Borrow",   () -> runWithPause(() -> BorrowHandler.interactiveRequest()));
+        menu.put("Return Book",    () -> runWithPause(() -> BorrowHandler.handleReturnInteractive()));
+        menu.put("My Borrow History",() -> runWithPause( () -> BorrowHandler.handleHistory(Map.of(), false)));
         menu.put("Back",           () -> {});
         menu.put("Exit",           () -> System.exit(0));
         return menu;

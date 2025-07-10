@@ -2,13 +2,15 @@ package org.ebenlib.cli;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Scanner;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
 public class ConsoleUI {
 
     public static final Stack<String> breadCrumbs = new Stack<>();
-    
+    private static final Scanner scanner = new Scanner(System.in);
+
         // Reset color
     public static final String RESET = "\u001B[0m";
 
@@ -274,6 +276,27 @@ public class ConsoleUI {
         }
     }
 
+    public static int promptInt(String msg) {
+        return Integer.parseInt(prompt(msg));
+    }
+
+    public static int promptInt(String message, int min, int max) {
+        int value;
+        while (true) {
+            System.out.print(message + " ");
+            String input = scanner.nextLine();
+            try {
+                value = Integer.parseInt(input);
+                if (value < min || value > max) {
+                    System.out.println("Please enter a number between " + min + " and " + max + ".");
+                } else {
+                    return value;
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid number. Please try again.");
+            }
+        }
+    }
 
     @FunctionalInterface
     public interface Colorizer {
