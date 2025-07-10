@@ -77,7 +77,7 @@ public class AuthHandler {
                 saveSession(user, role);
                 ConsoleUI.success("Signin successful! Welcome, " + user + " (" + role + ")");
                 if (isInteractive) {
-                    InteractiveShell.clearScreen();
+                    ConsoleUI.clearScreen();;
                     new InteractiveShell(user, role)
                         .run(InteractiveMenus.getMainMenu(role, user));
                 }
@@ -142,7 +142,7 @@ public class AuthHandler {
             saveSession(user, role);
             ConsoleUI.success("Signup successful! You are now logged in as " + user + " (" + role + ")");
             if (isInteractive) {
-                InteractiveShell.clearScreen();
+                ConsoleUI.clearScreen();;
                 new InteractiveShell(user, role)
                     .run(InteractiveMenus.getMainMenu(role, user));
             }

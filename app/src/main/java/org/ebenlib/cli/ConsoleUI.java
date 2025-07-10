@@ -2,9 +2,12 @@ package org.ebenlib.cli;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Stack;
+import java.util.stream.Collectors;
 
 public class ConsoleUI {
 
+    public static final Stack<String> breadCrumbs = new Stack<>();
     
         // Reset color
     public static final String RESET = "\u001B[0m";
@@ -157,6 +160,37 @@ public class ConsoleUI {
         } catch (IOException e) {
             return "";
         }
+    }
+
+    public static void pressEnterToContinue() {
+        System.out.print("[Press any ENTER to continue...]");
+        try {
+            System.in.read();
+        } catch (IOException ignored) {}
+    }
+
+    public static void clearScreen() {
+        try {
+            if (System.getProperty("os.name").toLowerCase().contains("win")) {
+                new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
+            } else {
+                System.out.print("\033[H\033[2J");
+                System.out.flush();
+            }
+        } catch (IOException | InterruptedException ex) {
+            // fallback: just print blank lines
+            for (int i = 0; i < 50; i++) System.out.println();
+        }
+    }
+
+    public static void showBreadCrumbs() {
+        String path = breadCrumbs.stream().collect(Collectors.joining(" " + ConsoleUI.CYAN + ">" + ConsoleUI.RESET + " "));
+        System.out.println(ConsoleUI.BOLD + path + ConsoleUI.RESET);
+        System.out.println(); // spacing
+    }
+
+    public static String safePeekBreadcrumb() {
+        return breadCrumbs.isEmpty() ? "" : breadCrumbs.peek();
     }
 
     /**

@@ -1,13 +1,13 @@
 package org.ebenlib.cli;
 
-import java.io.IOException;
+// import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
+// import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
-import org.ebenlib.cli.ConsoleUI.Colorizer;
+// import org.ebenlib.cli.ConsoleUI.Colorizer;
 
 public class InteractiveShell {
     private final String username;
@@ -17,30 +17,19 @@ public class InteractiveShell {
     public InteractiveShell(String username, String role) {
         this.username = username;
         this.role = role;
+        // if (!ConsoleUI.breadCrumbs.isEmpty()) {
+            // ConsoleUI.breadCrumbs.pop();
+        // }
     }
 
     public void run(Map<String, Runnable> menu) {
-        // ── Welcome Screen (runs only once) ─────────────────────────
-        clearScreen();
-        List<String> gradientColors = Arrays.asList(
-            ConsoleUI.BLUE,
-            ConsoleUI.CYAN,
-            ConsoleUI.PURPLE
-        );
-
-        Colorizer slantedColorizer = ConsoleUI.gradientColorizer(gradientColors, 30.0);
-        ConsoleUI.printLogo(slantedColorizer);
-        System.out.println("\n");
-        if (!"Guest".equals(username)) {
-            ConsoleUI.success("Welcome back, " + username + "!");
-        } else {
-            ConsoleUI.info("Welcome! Please sign in or sign up.");
-        }
-        ConsoleUI.prompt("Press ENTER to continue");
-        
+        // int x = 0;
         // ── Main Menu Loop ───────────────────────────────────────────
         while (true) {
-            clearScreen();
+            // if (x == 1) {ConsoleUI.prompt("Press ENTER to continue"); }
+            // if (x < 1){x++;}
+            ConsoleUI.clearScreen();
+            ConsoleUI.showBreadCrumbs();
             ConsoleUI.header("🕹️  " + username + " (" + role + ") — Select an option");
             List<String> options = new ArrayList<>(menu.keySet());
             for (int i = 0; i < options.size(); i++) {
@@ -61,27 +50,18 @@ public class InteractiveShell {
 
             String selected = options.get(choice - 1);
             ConsoleUI.success("You selected: " + selected);
+            // System.out.println(selected + ", "+ menu.get(selected) + ", "+ menu);
+            if (!selected.equalsIgnoreCase("Back") && !selected.equalsIgnoreCase("Exit") && !selected.equalsIgnoreCase(ConsoleUI.safePeekBreadcrumb()) && InteractiveMenus.NAVIGATION_COMMANDS.contains(selected)) {
+                ConsoleUI.breadCrumbs.push(selected);
+            }
             menu.get(selected).run();
 
-            if (selected.equalsIgnoreCase("Logout") ||
-                selected.equalsIgnoreCase("Back")    ||
-                selected.equalsIgnoreCase("Exit")) {
+            if (selected.equalsIgnoreCase("Logout") || selected.equalsIgnoreCase("Back") || selected.equalsIgnoreCase("Exit")) {
+                if (!ConsoleUI.breadCrumbs.isEmpty()) {
+                    ConsoleUI.breadCrumbs.pop();
+                }
                 break;
             }
-        }
-    }
-
-    public static void clearScreen() {
-        try {
-            if (System.getProperty("os.name").toLowerCase().contains("win")) {
-                new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
-            } else {
-                System.out.print("\033[H\033[2J");
-                System.out.flush();
-            }
-        } catch (IOException | InterruptedException ex) {
-            // fallback: just print blank lines
-            for (int i = 0; i < 50; i++) System.out.println();
         }
     }
 }

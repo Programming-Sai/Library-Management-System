@@ -17,15 +17,39 @@ public class CommandRouter {
 
         String command = args[0];
         Map<String, String> options = parseOptions(args);
-
+        String currentUserRole;
+        if (AuthHandler.getCurrentUser() != null){
+            currentUserRole = AuthHandler.getCurrentUser().getRole();
+        }else{
+            currentUserRole = "Reader";
+        }
         switch (command) {
             case "--interactive":
                 User userData = AuthHandler.getCurrentUser();
                 InteractiveShell shell;
+
+            // ── Welcome Screen (runs only once) ─────────────────────────
+                List<String> gradientColors = Arrays.asList(
+                    ConsoleUI.BLUE,
+                    ConsoleUI.CYAN,
+                    ConsoleUI.PURPLE
+                );
+
+                Colorizer slantedColorizer = ConsoleUI.gradientColorizer(gradientColors, 30.0);
+                ConsoleUI.printLogo(slantedColorizer);
+                System.out.println("\n");
+                
+        
                 if (userData != null) {
+                    ConsoleUI.success("Welcome back, " + userData.getUsername() + "!");
+                    ConsoleUI.pressEnterToContinue();
+                    ConsoleUI.breadCrumbs.push("Home");
                     shell = new InteractiveShell(userData.getUsername(), userData.getRole());
                     shell.run(InteractiveMenus.getMainMenu(userData.getRole(), userData.getUsername()));
                 } else {
+                    ConsoleUI.info("Welcome! Please sign in or sign up.");
+                    ConsoleUI.pressEnterToContinue();
+                    ConsoleUI.breadCrumbs.push("Home");
                     shell = new InteractiveShell("Guest", "Unauthenticated");
                     shell.run(InteractiveMenus.getUnauthenticatedMenu());
                 }
@@ -36,6 +60,11 @@ public class CommandRouter {
                 break;
 
             case "user":
+                if (!currentUserRole.equals("Librarian")) {
+                    ConsoleUI.error("Only librarians can use this command.");
+                    return;
+                }
+
                 // User management stubs
                 if (args.length < 2) {
                     System.out.println("[USER] No action specified. Available: list, delete, promote, demote, suspend, activate");
@@ -72,6 +101,10 @@ public class CommandRouter {
                 break;
 
             case "system":
+                if (!currentUserRole.equals("Librarian")) {
+                    ConsoleUI.error("Only librarians can use this command.");
+                    return;
+                }
                 // System management stubs
                 if (args.length < 2) {
                     System.out.println("[SYSTEM] No action specified. Available: init, stats, overdue, report");
@@ -81,6 +114,10 @@ public class CommandRouter {
                 break;
 
             case "report":
+                if (!currentUserRole.equals("Librarian")) {
+                    ConsoleUI.error("Only librarians can use this command.");
+                    return;
+                }
                 // Reports & data analysis stubs
                 if (args.length < 2) {
                     System.out.println("[REPORT] No action specified. Available: top-borrowed, top-fines, category-distribution");
