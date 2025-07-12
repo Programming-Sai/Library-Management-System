@@ -8,6 +8,7 @@ import java.util.Map;
 import org.ebenlib.book.BookHandler;
 import org.ebenlib.borrow.BorrowHandler;
 import org.ebenlib.cli.ConsoleUI.Colorizer;
+import org.ebenlib.profile.ProfileHandler;
 import org.ebenlib.user.User;
 import org.ebenlib.user.UserHandler;
 
@@ -88,20 +89,21 @@ public class CommandRouter {
                 break;
 
             case "borrow":
-            me = AuthHandler.requireActiveUser();    
-            if (me == null) return;
+                me = AuthHandler.requireActiveUser();    
+                if (me == null) return;
                 BorrowHandler.handle(args, options);
                 break;
 
             case "profile":
                 // Profile management stubs
-                if (args.length < 2) {
-                    System.out.println("[PROFILE] No action specified. Available: view, update, password");
-                } else {
-                    System.out.println("[PROFILE] Stub: profile " + args[1] + " invoked with options " + options);
-                }
+                // if (args.length < 2) {
+                //     System.out.println("[PROFILE] No action specified. Available: view, update, password");
+                // } else {
+                //     System.out.println("[PROFILE] Stub: profile " + args[1] + " invoked with options " + options);
+                // }
                 me = AuthHandler.requireActiveUser();
                 if (me == null) return;
+                ProfileHandler.handle(args, options);
                 break;
 
             case "system":

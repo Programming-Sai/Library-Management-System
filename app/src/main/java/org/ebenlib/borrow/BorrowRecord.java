@@ -32,6 +32,10 @@ public class BorrowRecord {
     public Status getStatus()     { return status; }
     public double getFineOwed()   { return fineOwed; }
 
+    public void setUser(String newUser){
+        user = newUser;
+    }
+
     /** Update status and stamp decisionDate / returnDate as needed, then recalc fine */
     public void setStatus(Status newStatus) {
         this.status = newStatus;

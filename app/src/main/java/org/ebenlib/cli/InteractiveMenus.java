@@ -6,6 +6,8 @@ import java.util.Set;
 
 import org.ebenlib.book.BookHandler;
 import org.ebenlib.borrow.BorrowHandler;
+import org.ebenlib.profile.ProfileHandler;
+import org.ebenlib.user.UserHandler;
 
 public class InteractiveMenus {
 
@@ -40,13 +42,18 @@ public class InteractiveMenus {
     public static Map<String, Runnable> getUserMenu(String role) {
         Map<String, Runnable> menu = new LinkedHashMap<>();
         if (role.equalsIgnoreCase("Librarian")) {
-            menu.put("List Users",   () -> runWithPause(() -> stub("List Users")));
-            menu.put("Promote User", () -> runWithPause(() -> stub("Promote User")));
+            menu.put("List Users",     () -> runWithPause(UserHandler::handleList));
+            menu.put("Promote User",   () -> runWithPause(UserHandler::interactivePromote));
+            menu.put("Demote User",    () -> runWithPause(UserHandler::interactiveDemote));
+            menu.put("Activate User",  () -> runWithPause(() -> UserHandler.interactiveActivation(true)));
+            menu.put("Suspend User",   () -> runWithPause(() -> UserHandler.interactiveActivation(false)));
+            menu.put("Delete User",    () -> runWithPause(UserHandler::interactiveDelete));
         }
         menu.put("Back",   () -> {});
         menu.put("Exit",   () -> System.exit(0));
         return menu;
     }
+
 
     public static Map<String, Runnable> getBookMenu(String role) {
         Map<String, Runnable> menu = new LinkedHashMap<>();
@@ -81,9 +88,20 @@ public class InteractiveMenus {
 
     public static Map<String, Runnable> getProfileMenu(String role) {
         Map<String, Runnable> menu = new LinkedHashMap<>();
-        menu.put("View Profile",    () -> runWithPause(() -> stub("View Profile")));
-        menu.put("Update Profile",  () -> runWithPause(() -> stub("Update Profile")));
-        menu.put("Change Password", () -> runWithPause(() -> stub("Change Password")));
+        menu.put("View Profile", () -> runWithPause(() -> {
+            var current = AuthHandler.getCurrentUser();
+            if (current != null) ProfileHandler.handle(new String[]{"profile", "view"}, Map.of());
+        }));
+
+        menu.put("Update Profile", () -> runWithPause(() -> {
+            var current = AuthHandler.getCurrentUser();
+            if (current != null) ProfileHandler.handle(new String[]{"profile", "update"}, Map.of());
+        }));
+
+        menu.put("Change Password", () -> runWithPause(() -> {
+            var current = AuthHandler.getCurrentUser();
+            if (current != null) ProfileHandler.handle(new String[]{"profile", "password"}, Map.of());
+        }));
         menu.put("Back",            () -> {});
         menu.put("Exit",            () -> System.exit(0));
         return menu;

@@ -90,4 +90,59 @@ public class UserStore {
         opt.get().setActive(active);
         return true;
     }
+
+    // Update username
+public static boolean rename(String oldName, String newName) {
+    try {
+        List<String> lines = Files.readAllLines(CSV);
+        List<String> updated = new ArrayList<>();
+        for (String line : lines) {
+            String[] parts = line.split(",");
+            if (parts[0].equals(oldName)) {
+                parts[0] = newName;
+                updated.add(String.join(",", parts));
+            } else {
+                updated.add(line);
+            }
+        }
+        Files.write(CSV, updated);
+        return true;
+    } catch (IOException e) {
+        return false;
+    }
+}
+
+    // Update password
+    public static boolean updatePassword(String username, String newPwd) {
+        try {
+            List<String> lines = Files.readAllLines(CSV);
+            List<String> updated = new ArrayList<>();
+            for (String line : lines) {
+                String[] parts = line.split(",");
+                if (parts[0].equals(username)) {
+                    parts[1] = newPwd;
+                }
+                updated.add(String.join(",", parts));
+            }
+            Files.write(CSV, updated);
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    // Check password
+    public static boolean verifyPassword(String username, String pwd) {
+        try (BufferedReader r = Files.newBufferedReader(CSV)) {
+            String line;
+            while ((line = r.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts[0].equals(username) && parts[1].equals(pwd)) {
+                    return true;
+                }
+            }
+        } catch (IOException ignored) {}
+        return false;
+    }
+
 }

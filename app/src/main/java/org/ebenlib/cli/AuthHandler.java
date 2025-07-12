@@ -193,7 +193,6 @@ public class AuthHandler {
             String username = parts[0].trim();
             String role = parts[1].trim();
             boolean active  = parts.length > 2 && Boolean.parseBoolean(parts[2].trim());
-            System.out.println(new User(username, role, active));
             return new User(username, role, active);
         } catch (Exception e) {
             return null;
@@ -256,5 +255,17 @@ public class AuthHandler {
 
         return null;
     }
+
+    public static void updateSessionUsername(String newUsername) {
+        User u = getCurrentUser();
+        if (u == null) return;
+        try (BufferedWriter writer = Files.newBufferedWriter(
+                SESSION_FILE_PATH, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+            writer.write(String.join(",", newUsername, u.getRole(), String.valueOf(u.isActive())));
+        } catch (IOException e) {
+            ConsoleUI.warning("Failed to update session: " + e.getMessage());
+        }
+    }
+
 
 }

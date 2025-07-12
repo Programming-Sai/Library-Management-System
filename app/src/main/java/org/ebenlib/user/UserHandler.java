@@ -44,7 +44,7 @@ public class UserHandler {
         ConsoleUI.println("  user activate      --username <name>       Reactivate suspended user", ConsoleUI.WHITE);
     }
 
-    private static void handleList() {
+    public static void handleList() {
         List<User> all = store.listAll();
         if (all.isEmpty()) {
             ConsoleUI.info("No users available.");
@@ -66,7 +66,7 @@ public class UserHandler {
         TablePrinter.printTable(rows, 10, widths);
     }
 
-    private static void handleDelete(Map<String,String> o) {
+    public static void handleDelete(Map<String,String> o) {
         String user = o.get("username");
         if (user == null) {
             ConsoleUI.error("Missing --username");
@@ -79,7 +79,7 @@ public class UserHandler {
         }
     }
 
-    private static void handleRoleChange(Map<String,String> o, String newRole) {
+    public static void handleRoleChange(Map<String,String> o, String newRole) {
         String user = o.get("username");
         if (user == null) {
             ConsoleUI.error("Missing --username");
@@ -92,7 +92,7 @@ public class UserHandler {
         }
     }
 
-    private static void handleActivation(Map<String,String> o, boolean activate) {
+    public static void handleActivation(Map<String,String> o, boolean activate) {
         String user = o.get("username");
         if (user == null) {
             ConsoleUI.error("Missing --username");
@@ -104,4 +104,62 @@ public class UserHandler {
             ConsoleUI.error("No such user: " + user);
         }
     }
+
+
+    public static String promptUsernameSelection() {
+        List<User> users = store.listAll();
+        if (users.isEmpty()) {
+            ConsoleUI.error("No users found.");
+            return null;
+        }
+
+        ConsoleUI.header("Select a User");
+        for (int i = 0; i < users.size(); i++) {
+            User u = users.get(i);
+            System.out.printf("%2d. %s (%s) [%s]%n", i + 1, u.getUsername(), u.getRole(),
+                u.isActive() ? "Active" : "Suspended");
+        }
+
+        while (true) {
+            String input = ConsoleUI.prompt("Enter number (or 0 to cancel):");
+            try {
+                int index = Integer.parseInt(input);
+                if (index == 0) return null;
+                if (index > 0 && index <= users.size()) {
+                    return users.get(index - 1).getUsername();
+                }
+            } catch (NumberFormatException ignored) {}
+            ConsoleUI.error("Invalid input. Please enter a number between 1 and " + users.size());
+        }
+    }
+
+
+
+    public static void interactivePromote() {
+        String user = promptUsernameSelection();
+        handleRoleChange(Map.of("username", user), "Librarian");
+    }
+
+    public static void interactiveDemote() {
+        String user = promptUsernameSelection();
+        handleRoleChange(Map.of("username", user), "Reader");
+    }
+
+    public static void interactiveActivation(boolean activate) {
+        String user = promptUsernameSelection();
+        handleActivation(Map.of("username", user), activate);
+    }
+
+    public static void interactiveDelete() {
+        String user = promptUsernameSelection();
+        ConsoleUI.warning("Are you sure you want to delete " + user + "? This cannot be undone.");
+        String confirm = ConsoleUI.prompt("Type 'yes' to confirm:");
+        if (confirm.equalsIgnoreCase("yes")) {
+            handleDelete(Map.of("username", user));
+        } else {
+            ConsoleUI.info("Delete cancelled.");
+        }
+    }
+
+
 }

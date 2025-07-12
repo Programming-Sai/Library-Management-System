@@ -124,4 +124,8 @@ public class TablePrinter {
         }
         printTable(rows, DEFAULT_PAGE_SIZE, widths);
     }
+
+    public static void printTable(String[] row, int pageSize, int[] colWidths) {
+        printTable(row, pageSize, colWidths);
+    }
 }

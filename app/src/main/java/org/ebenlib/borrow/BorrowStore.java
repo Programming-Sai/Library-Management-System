@@ -160,4 +160,13 @@ public class BorrowStore {
         save();
     }
 
+    public void updateUsername(String oldUsername, String newUsername) {
+        for (BorrowRecord r : cache) {
+            if (r.getUser().equalsIgnoreCase(oldUsername)) {
+                r.setUser(newUsername); // you’ll need to allow mutation or rebuild record
+            }
+        }
+        save(); // persist the changes
+    }
+
 }
