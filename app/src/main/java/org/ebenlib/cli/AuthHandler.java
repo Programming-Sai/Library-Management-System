@@ -17,7 +17,7 @@ public class AuthHandler {
         "app", "src", "main", "resources", "users.csv"
     );
     private static final Path SESSION_FILE_PATH = Paths.get(
-        "app", "src", "main", "resources", "session.txt"
+        "app", "src", "main", "resources", "session.csv"
     );
     // private static final Scanner fallbackScanner = new Scanner(System.in);
 

@@ -13,11 +13,13 @@ import java.util.stream.Collectors;
 
 public class BorrowHandler {
 
-    public static final BorrowStore store = new BorrowStore(Paths.get("src","main","resources","borrows.csv"));
-    private static final BookService bookService = new BookService(Paths.get("src", "main", "resources", "books.csv"));
+    public static final BorrowStore store = new BorrowStore(Paths.get("app", "src","main","resources","borrows.csv"));
+    private static final BookService bookService = new BookService(Paths.get("app", "src", "main", "resources", "books.csv"));
+    
 
     static {
         store.load();
+        store.refreshAllFines();
     }
 
     public static void handle(String[] args, Map<String,String> opts) {
@@ -41,23 +43,36 @@ public class BorrowHandler {
 
     public static void printHelp() {
         ConsoleUI.header("Borrow commands");
-        ConsoleUI.println("  borrow request --book-id=...          Request to borrow a book", ConsoleUI.WHITE);
-        ConsoleUI.println("  borrow approve --id=...               Approve a pending request (librarian)", ConsoleUI.WHITE);
-        ConsoleUI.println("  borrow reject --id=...                Reject a pending request (librarian)", ConsoleUI.WHITE);
-        ConsoleUI.println("  borrow return --id=...                Mark an approved borrow as returned", ConsoleUI.WHITE);
-        ConsoleUI.println("  borrow list [--status=PENDING|APPROVED]   List requests by status", ConsoleUI.WHITE);
+        ConsoleUI.println("  borrow request --book-id ...          Request to borrow a book", ConsoleUI.WHITE);
+        ConsoleUI.println("  borrow approve --id ...               Approve a pending request (librarian)", ConsoleUI.WHITE);
+        ConsoleUI.println("  borrow reject --id ...                Reject a pending request (librarian)", ConsoleUI.WHITE);
+        ConsoleUI.println("  borrow return --id ...                Mark an approved borrow as returned", ConsoleUI.WHITE);
+        ConsoleUI.println("  borrow list [--status PENDING|APPROVED]   List requests by status", ConsoleUI.WHITE);
         ConsoleUI.println("  borrow history                        View your borrow history", ConsoleUI.WHITE);
         ConsoleUI.println("  borrow all-history                    View all users’ history (librarian)", ConsoleUI.WHITE);
-        ConsoleUI.println("  borrow interactive                    Enter interactive borrow menu", ConsoleUI.WHITE);
+        // ConsoleUI.println("  borrow interactive                    Enter interactive borrow menu", ConsoleUI.WHITE);
     }
 
     // — Non‑interactive —
 
     public static void handleRequest(Map<String,String> o) {
+        String user   = AuthHandler.getCurrentUser().getUsername(); 
+        double outstanding = store.getTotalFineForUser(user);
+        if (outstanding > BorrowSettings.fineBlockThreshold) {
+            ConsoleUI.error(String.format(
+                "Outstanding fines $%.2f exceed allowed $%.2f — request denied",
+                outstanding, BorrowSettings.fineBlockThreshold
+            ));
+            return;
+        }
         String bookId = o.get("book-id");
-        String user   = AuthHandler.getCurrentUser().getUsername();
         if (bookId == null) {
             ConsoleUI.error("Missing --book-id");
+            return;
+        }
+        Optional<Book> book = bookService.findByIsbn(bookId);
+        if (book.isEmpty()) {
+            ConsoleUI.error("No such book with ID " + bookId);
             return;
         }
         int reqId = store.addRequest(user, bookId);
@@ -121,16 +136,16 @@ public class BorrowHandler {
         }
         DateTimeFormatter df = DateTimeFormatter.ISO_LOCAL_DATE;
         List<String[]> rows = recs.stream()
-            .map(r -> new String[]{
+            .map(r -> new String[] {
                 String.valueOf(r.getId()),
                 r.getUser(),
                 r.getBookId(),
-                r.getDate().format(df),
-                r.getStatus().name()
-            })
-            .collect(Collectors.toList());
-        String[] hdr = {"ID","User","Book ID","Date","Status"};
-        int[] widths = {4, 15, 10, 12, 10};
+                r.getDecisionDate() == null ? "" : r.getDecisionDate().format(df),
+                r.getStatus().name(),
+                String.format("%.2f", r.getFineOwed())
+            }).collect(Collectors.toList());
+        String[] hdr = {"ID","User","Book","Decided","Status","Fine"};
+        int[] widths = {4,15,10,12,10,6};
         TablePrinter.printHeader(hdr, widths);
         TablePrinter.printTable(rows, 10, widths);
     }
@@ -165,6 +180,7 @@ public class BorrowHandler {
         String bookId = selected.getIsbn();
 
         handleRequest(Map.of("book-id", bookId));
+        store.save();
         ConsoleUI.pressEnterToContinue();
     }
 
@@ -180,7 +196,10 @@ public class BorrowHandler {
         ConsoleUI.header("Pending Requests");
         for (int i = 0; i < pending.size(); i++) {
             BorrowRecord r = pending.get(i);
-            ConsoleUI.println((i + 1) + ". " + r.getUser() + " requested book: " + r.getBookId() + " on " + r.getDate(), ConsoleUI.WHITE);
+            Book b = bookService.findByIsbn(r.getBookId()).orElse(null);
+            String title = (b != null) ? b.getTitle() : "(Unknown Title)";
+            ConsoleUI.println("  " + (i + 1) + ". ID: " + r.getId() + " | " + title + " | ISBN: " + r.getBookId() + " | Date: " + r.getRequestDate(), ConsoleUI.WHITE);
+
         }
 
         int choice = ConsoleUI.promptInt("Select request to approve/reject (0 to cancel): ");
@@ -197,6 +216,7 @@ public class BorrowHandler {
             store.updateStatus(selected.getId(), Status.REJECTED);
             ConsoleUI.success("Request rejected.");
         }
+        store.save();
         ConsoleUI.pressEnterToContinue();
     }
 
@@ -214,7 +234,9 @@ public class BorrowHandler {
 
         for (int i = 0; i < borrowed.size(); i++) {
             BorrowRecord r = borrowed.get(i);
-            ConsoleUI.println("  " + (i + 1) + ". ID: " + r.getId() + " | Book ID: " + r.getBookId() + " | Date: " + r.getDate(), ConsoleUI.WHITE);
+            Book b = bookService.findByIsbn(r.getBookId()).orElse(null);
+            String title = (b != null) ? b.getTitle() : "(Unknown Title)";
+            ConsoleUI.println("  " + (i + 1) + ". ID: " + r.getId() + " | " + title + " | ISBN: " + r.getBookId() + " | Date: " + r.getRequestDate(), ConsoleUI.WHITE);
         }
         ConsoleUI.println("  0. Cancel", ConsoleUI.DIM);
 
@@ -228,7 +250,28 @@ public class BorrowHandler {
         String id = String.valueOf(selected.getId());
 
         handleReturn(Map.of("id", id));
+        store.save();
         ConsoleUI.pressEnterToContinue();
+    }
+
+    /** Show top debtors — statistically in “stats” section */
+    public static void showTopDebtors(int topN) {
+        Map<String, Double> fines = new HashMap<>();
+        store.listAll().stream()
+            .filter(r -> r.getStatus() == Status.APPROVED)
+            .forEach(r -> fines.merge(r.getUser(), r.getFineOwed(), Double::sum));
+
+        PriorityQueue<Map.Entry<String,Double>> pq = new PriorityQueue<>(
+            (a,b) -> Double.compare(b.getValue(), a.getValue())
+        );
+        pq.addAll(fines.entrySet());
+
+        ConsoleUI.header("📈 Top Debtors");
+        for (int i = 1; i <= topN && !pq.isEmpty(); i++) {
+            var e = pq.poll();
+            ConsoleUI.println(String.format("%d. %s – $%.2f", i, e.getKey(), e.getValue()),
+                              ConsoleUI.WHITE);
+        }
     }
 
     

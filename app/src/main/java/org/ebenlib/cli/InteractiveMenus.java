@@ -4,6 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.ebenlib.book.BookHandler;
 import org.ebenlib.borrow.BorrowHandler;
 
 public class InteractiveMenus {
@@ -50,13 +51,13 @@ public class InteractiveMenus {
     public static Map<String, Runnable> getBookMenu(String role) {
         Map<String, Runnable> menu = new LinkedHashMap<>();
         if (role.equalsIgnoreCase("Librarian")) {
-            menu.put("Add Book",    () -> runWithPause(() -> stub("Add Book")));
-            menu.put("Delete Book", () -> runWithPause(() -> stub("Delete Book")));
-            menu.put("Update Book", () -> runWithPause(() -> stub("Update Book")));
-            menu.put("Stats and Analytics", () -> runWithPause(() -> stub("Stats and Analytics")));
+            menu.put("Add Book",    () -> runWithPause(BookHandler::interactiveAdd));
+            menu.put("Delete Book", () -> runWithPause(BookHandler::interactiveDelete));
+            menu.put("Update Book", () -> runWithPause(BookHandler::interactiveUpdate));
+            menu.put("Stats and Analytics", () -> runWithPause(BookHandler::interactiveStats));
         }
-        menu.put("List Books", () -> runWithPause(() -> stub("List Books")));
-        menu.put("Search Books", () -> runWithPause(() -> stub("Search Books")));
+        menu.put("List Books", () -> runWithPause(BookHandler::handleList));
+        menu.put("Search Books", () -> runWithPause(() -> BookHandler.interactiveSearch()));
         menu.put("Back",       () -> {});
         menu.put("Exit",       () -> System.exit(0));
         return menu;

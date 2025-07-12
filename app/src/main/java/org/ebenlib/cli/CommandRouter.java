@@ -76,12 +76,6 @@ public class CommandRouter {
                 break;
 
             case "book":
-                // Book management stubs
-                if (args.length < 2) {
-                    System.out.println("[BOOK] No action specified. Available: add, delete, update, list, search, stats");
-                } else {
-                    System.out.println("[BOOK] Stub: book " + args[1] + " invoked with options " + options);
-                }
                 BookHandler.handle(args, options);
                 break;
 
@@ -214,25 +208,33 @@ public class CommandRouter {
             ConsoleUI.println("  ebenlib --interactive", ConsoleUI.WHITE);
         }
         
-    // Parse both short (-u val) and long (--username=val) style arguments
     private static Map<String, String> parseOptions(String[] args) {
         Map<String, String> options = new HashMap<>();
         for (int i = 1; i < args.length; i++) {
             String arg = args[i];
+
             if (arg.startsWith("--") && arg.contains("=")) {
                 String[] parts = arg.substring(2).split("=", 2);
                 options.put(parts[0], parts[1]);
+
             } else if (arg.startsWith("-") && arg.contains("=")) {
                 String[] parts = arg.substring(1).split("=", 2);
                 options.put(parts[0], parts[1]);
+
             } else if (arg.startsWith("-")) {
                 String key = arg.startsWith("--") ? arg.substring(2) : arg.substring(1);
-                // look ahead for value
-                if (i + 1 < args.length && !args[i + 1].startsWith("-")) {
-                    options.put(key, args[++i]);
+
+                StringBuilder valueBuilder = new StringBuilder();
+                while (i + 1 < args.length && !args[i + 1].startsWith("-")) {
+                    valueBuilder.append(" ").append(args[++i]);
+                }
+
+                if (valueBuilder.length() > 0) {
+                    options.put(key, valueBuilder.toString().trim());
                 }
             }
         }
         return options;
     }
+
 }
