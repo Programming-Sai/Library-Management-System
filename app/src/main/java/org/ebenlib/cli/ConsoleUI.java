@@ -277,7 +277,11 @@ public class ConsoleUI {
     }
 
     public static int promptInt(String msg) {
-        return Integer.parseInt(prompt(msg));
+        try{
+            return Integer.parseInt(prompt(msg));
+        }catch(Exception e){
+            return 0;
+        }
     }
 
     public static int promptInt(String message, int min, int max) {

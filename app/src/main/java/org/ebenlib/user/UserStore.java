@@ -1,0 +1,93 @@
+package org.ebenlib.user;
+
+import org.ebenlib.cli.ConsoleUI;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.file.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Persists users to CSV:
+ *   username,role,active
+ */
+public class UserStore {
+    private static final Path CSV = Paths.get("app","src","main","resources","users.csv");
+    private final List<User> users = new ArrayList<>();
+
+    /** Load all users from CSV into memory */
+    public void load() {
+        users.clear();
+        if (!Files.exists(CSV)) return;
+        try (BufferedReader r = Files.newBufferedReader(CSV)) {
+            String line;
+            while ((line = r.readLine()) != null) {
+                String[] f = line.trim().split(",",3);
+                if (f.length < 3) continue;
+                String username = f[0].trim();
+                String role        = String.valueOf(f[1].trim().toUpperCase());
+                boolean active   = Boolean.parseBoolean(f[2].trim());
+                users.add(new User(username, role, active));
+            }
+        } catch (IOException e) {
+            ConsoleUI.error("Failed to load users: " + e.getMessage());
+        }
+    }
+
+    /** Write current users back to CSV */
+    public void save() {
+        try {
+            Files.createDirectories(CSV.getParent());
+            try (BufferedWriter w = Files.newBufferedWriter(CSV,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING)) {
+                for (User u : users) {
+                    w.write(String.join(",",
+                        u.getUsername(),
+                        u.getRole(),
+                        Boolean.toString(u.isActive())
+                    ));
+                    w.newLine();
+                }
+            }
+        } catch (IOException e) {
+            ConsoleUI.error("Failed to save users: " + e.getMessage());
+        }
+    }
+
+    /** Return a defensive copy of all users */
+    public List<User> listAll() {
+        return new ArrayList<>(users);
+    }
+
+    /** Find one by exact username (case‑insensitive) */
+    public Optional<User> findByUsername(String username) {
+        return users.stream()
+            .filter(u -> u.getUsername().equalsIgnoreCase(username))
+            .findFirst();
+    }
+
+    /** Remove by username */
+    public boolean delete(String username) {
+        return users.removeIf(u -> u.getUsername().equalsIgnoreCase(username));
+    }
+
+    /** Change role */
+    public boolean changeRole(String username, String newRole) {
+        Optional<User> opt = findByUsername(username);
+        if (opt.isEmpty()) return false;
+        opt.get().setRole(newRole);
+        return true;
+    }
+
+    /** Suspend or reactivate */
+    public boolean setActive(String username, boolean active) {
+        Optional<User> opt = findByUsername(username);
+        if (opt.isEmpty()) return false;
+        opt.get().setActive(active);
+        return true;
+    }
+}

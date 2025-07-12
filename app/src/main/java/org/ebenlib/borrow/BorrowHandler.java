@@ -198,7 +198,7 @@ public class BorrowHandler {
             BorrowRecord r = pending.get(i);
             Book b = bookService.findByIsbn(r.getBookId()).orElse(null);
             String title = (b != null) ? b.getTitle() : "(Unknown Title)";
-            ConsoleUI.println("  " + (i + 1) + ". ID: " + r.getId() + " | " + title + " | ISBN: " + r.getBookId() + " | Date: " + r.getRequestDate(), ConsoleUI.WHITE);
+            ConsoleUI.println("  " + (i + 1) + ". ID: " + r.getId() + " | " + title + " | User: "+ r.getUser()+ " | ISBN: " + r.getBookId() + " | Date: " + r.getRequestDate(), ConsoleUI.WHITE);
 
         }
 

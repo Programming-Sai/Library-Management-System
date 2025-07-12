@@ -8,6 +8,8 @@ import java.util.Map;
 import org.ebenlib.book.BookHandler;
 import org.ebenlib.borrow.BorrowHandler;
 import org.ebenlib.cli.ConsoleUI.Colorizer;
+import org.ebenlib.user.User;
+import org.ebenlib.user.UserHandler;
 
 public class CommandRouter {
 
@@ -25,6 +27,8 @@ public class CommandRouter {
         }else{
             currentUserRole = "Reader";
         }
+        User me;
+
         switch (command) {
             case "--interactive":
                 User userData = AuthHandler.getCurrentUser();
@@ -66,20 +70,26 @@ public class CommandRouter {
                     ConsoleUI.error("Only librarians can use this command.");
                     return;
                 }
-
-                // User management stubs
-                if (args.length < 2) {
-                    System.out.println("[USER] No action specified. Available: list, delete, promote, demote, suspend, activate");
-                } else {
-                    System.out.println("[USER] Stub: user " + args[1] + " invoked with options " + options);
-                }
+                me = AuthHandler.requireActiveUser();
+                if (me == null) return;
+                UserHandler.handle(args, options);
+                // // User management stubs
+                // if (args.length < 2) {
+                //     System.out.println("[USER] No action specified. Available: list, delete, promote, demote, suspend, activate");
+                // } else {
+                //     System.out.println("[USER] Stub: user " + args[1] + " invoked with options " + options);
+                // }
                 break;
 
             case "book":
+            me = AuthHandler.requireActiveUser();    
+            if (me == null) return;
                 BookHandler.handle(args, options);
                 break;
 
             case "borrow":
+            me = AuthHandler.requireActiveUser();    
+            if (me == null) return;
                 BorrowHandler.handle(args, options);
                 break;
 
@@ -90,6 +100,8 @@ public class CommandRouter {
                 } else {
                     System.out.println("[PROFILE] Stub: profile " + args[1] + " invoked with options " + options);
                 }
+                me = AuthHandler.requireActiveUser();
+                if (me == null) return;
                 break;
 
             case "system":
@@ -103,6 +115,8 @@ public class CommandRouter {
                 } else {
                     System.out.println("[SYSTEM] Stub: system " + args[1] + " invoked with options " + options);
                 }
+                me = AuthHandler.requireActiveUser();
+                if (me == null) return;
                 break;
 
             case "report":
@@ -116,6 +130,8 @@ public class CommandRouter {
                 } else {
                     System.out.println("[REPORT] Stub: report " + args[1] + " invoked with options " + options);
                 }
+                me = AuthHandler.requireActiveUser();
+                if (me == null) return;
                 break;
             case "test":
                 ConsoleThemeTest.main(args);
@@ -156,12 +172,12 @@ public class CommandRouter {
             ConsoleUI.println("      signout   Logout\n", ConsoleUI.WHITE);
 
             ConsoleUI.println("  user [list|delete|promote|demote|suspend|activate]", ConsoleUI.BRIGHT_CYAN);
-            ConsoleUI.println("      list      List users", ConsoleUI.WHITE);
-            ConsoleUI.println("      delete    Remove a user", ConsoleUI.WHITE);
-            ConsoleUI.println("      promote   Make user a Librarian", ConsoleUI.WHITE);
-            ConsoleUI.println("      demote    Revoke Librarian role", ConsoleUI.WHITE);
-            ConsoleUI.println("      suspend   Disable account", ConsoleUI.WHITE);
-            ConsoleUI.println("      activate  Re-enable account\n", ConsoleUI.WHITE);
+            ConsoleUI.println("      list         List users", ConsoleUI.WHITE);
+            ConsoleUI.println("      delete       Remove a user", ConsoleUI.WHITE);
+            ConsoleUI.println("      promote      Make user a Librarian", ConsoleUI.WHITE);
+            ConsoleUI.println("      demote       Revoke Librarian role", ConsoleUI.WHITE);
+            ConsoleUI.println("      deactivate   Disable account", ConsoleUI.WHITE);
+            ConsoleUI.println("      activate     Re-enable account\n", ConsoleUI.WHITE);
 
             ConsoleUI.println("  book [add|update|delete|list|search|stats]", ConsoleUI.BRIGHT_CYAN);
             ConsoleUI.println("      add       Add new book", ConsoleUI.WHITE);

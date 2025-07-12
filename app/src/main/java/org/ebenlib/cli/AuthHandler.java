@@ -11,6 +11,8 @@ import java.nio.file.StandardOpenOption;
 import java.util.Map;
 // import java.util.Scanner;
 
+import org.ebenlib.user.User;
+
 public class AuthHandler {
 
     private static final Path USER_FILE_PATH = Paths.get(
@@ -83,6 +85,7 @@ public class AuthHandler {
                 }
             } else {
                 ConsoleUI.error("Signin failed: Invalid credentials.");
+                // System.out.println(user + ", " + pwdChars);
             }
         } catch (Exception e) {
             ConsoleUI.error("Input error: " + e.getMessage());
@@ -134,9 +137,8 @@ public class AuthHandler {
         try {
             Files.createDirectories(USER_FILE_PATH.getParent());
             if (!Files.exists(USER_FILE_PATH)) Files.createFile(USER_FILE_PATH);
-            try (BufferedWriter writer = Files.newBufferedWriter(
-                    USER_FILE_PATH, StandardOpenOption.APPEND)) {
-                writer.write(String.join(",", user, new String(pwd1), role));
+            try (BufferedWriter writer = Files.newBufferedWriter(USER_FILE_PATH, StandardOpenOption.APPEND)) {
+                writer.write(String.join(",", user, new String(pwd1), role, "true"));
                 writer.newLine();
             }
             saveSession(user, role);
@@ -175,8 +177,9 @@ public class AuthHandler {
 
     private static void saveSession(String username, String role) {
         try (BufferedWriter writer = Files.newBufferedWriter(
-                SESSION_FILE_PATH, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
-            writer.write(username + "," + role);
+                SESSION_FILE_PATH,
+                StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+            writer.write(String.join(",", username, role, "true"));
         } catch (IOException e) {
             ConsoleUI.warning("Failed to save session: " + e.getMessage());
         }
@@ -187,11 +190,27 @@ public class AuthHandler {
         if (!Files.exists(SESSION_FILE_PATH)) return null;
         try (BufferedReader r = Files.newBufferedReader(SESSION_FILE_PATH)) {
             String[] parts = r.readLine().strip().split(",");
-            return new User(parts[0], parts[1]);
+            String username = parts[0].trim();
+            String role = parts[1].trim();
+            boolean active  = parts.length > 2 && Boolean.parseBoolean(parts[2].trim());
+            System.out.println(new User(username, role, active));
+            return new User(username, role, active);
         } catch (Exception e) {
-            // ignore
+            return null;
         }
-        return null;
+    }
+
+    public static User requireActiveUser() {
+        User u = getCurrentUser();
+        if (u == null) {
+            ConsoleUI.error("You must be signed in to perform that action.");
+            return null;
+        }
+        if (!u.isActive()) {
+            ConsoleUI.error("Your account is deactivated. Contact a librarian.");
+            return null;
+        }
+        return u;
     }
 
     // —— HELPERS ——
@@ -211,16 +230,31 @@ public class AuthHandler {
             ConsoleUI.warning("User file not found. Please signup first.");
             return null;
         }
+
         try (BufferedReader r = Files.newBufferedReader(USER_FILE_PATH)) {
-            String[] parts;
-            while ((parts = r.readLine().strip().split(",")).length == 3) {
-                if (parts[0].equals(username) && parts[1].equals(password)) {
-                    return parts[2];
+            String line;
+            while ((line = r.readLine()) != null) {
+                String[] parts = line.strip().split(",");
+                if (parts.length >= 4) {
+                    String storedUser = parts[0];
+                    String storedPass = parts[1];
+                    String role = parts[2];
+                    boolean isActive = Boolean.parseBoolean(parts[3]);
+
+                    if (storedUser.equals(username) && storedPass.equals(password)) {
+                        if (!isActive) {
+                            ConsoleUI.error("Account is suspended. Please contact a librarian.");
+                            return null;
+                        }
+                        return role;
+                    }
                 }
             }
         } catch (IOException e) {
             ConsoleUI.warning("Failed to read user data: " + e.getMessage());
         }
+
         return null;
     }
+
 }
