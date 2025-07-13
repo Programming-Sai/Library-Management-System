@@ -12,6 +12,9 @@ import java.util.Map;
 // import java.util.Scanner;
 
 import org.ebenlib.user.User;
+import org.ebenlib.user.UserStore;
+
+import java.util.Optional;
 
 public class AuthHandler {
 
@@ -21,6 +24,12 @@ public class AuthHandler {
     private static final Path SESSION_FILE_PATH = Paths.get(
         "app", "src", "main", "resources", "session.csv"
     );
+
+    static UserStore store = new UserStore();
+    static {
+        store.load(); // load users once when class is first used
+    }
+    
     // private static final Scanner fallbackScanner = new Scanner(System.in);
 
     public static void handle(String[] args, Map<String, String> opts) {
@@ -85,7 +94,6 @@ public class AuthHandler {
                 }
             } else {
                 ConsoleUI.error("Signin failed: Invalid credentials.");
-                // System.out.println(user + ", " + pwdChars);
             }
         } catch (Exception e) {
             ConsoleUI.error("Input error: " + e.getMessage());
@@ -191,9 +199,12 @@ public class AuthHandler {
         try (BufferedReader r = Files.newBufferedReader(SESSION_FILE_PATH)) {
             String[] parts = r.readLine().strip().split(",");
             String username = parts[0].trim();
+            Optional<User> userOpt = store.findByUsername(username);
+            if (userOpt.isEmpty()) return null;
+            String password = userOpt.get().getPassword();  
             String role = parts[1].trim();
             boolean active  = parts.length > 2 && Boolean.parseBoolean(parts[2].trim());
-            return new User(username, role, active);
+            return new User(username, password, role, active);
         } catch (Exception e) {
             return null;
         }
@@ -243,6 +254,7 @@ public class AuthHandler {
                     if (storedUser.equals(username) && storedPass.equals(password)) {
                         if (!isActive) {
                             ConsoleUI.error("Account is suspended. Please contact a librarian.");
+                            System.exit(0);
                             return null;
                         }
                         return role;

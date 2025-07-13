@@ -7,6 +7,7 @@ import org.ebenlib.cli.ConsoleUI;
 import org.ebenlib.cli.TablePrinter;
 
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -23,19 +24,49 @@ public class BorrowHandler {
     }
 
     public static void handle(String[] args, Map<String,String> opts) {
+        String currentUserRole;
+        if (AuthHandler.getCurrentUser() != null){
+            currentUserRole = AuthHandler.getCurrentUser().getRole();
+        }else{
+            currentUserRole = "Reader";
+        }
         if (args.length < 2) {
             printHelp();
             return;
         }
         switch (args[1]) {
             case "request":      handleRequest(opts);      break;
-            case "approve":      handleApprove(opts);      break;
-            case "reject":       handleReject(opts);       break;
+            case "approve":      
+                if (!currentUserRole.equals("Librarian")) {
+                    ConsoleUI.error("Only librarians can use this command.");
+                    return;
+                } 
+                handleApprove(opts);      
+                break;
+            case "reject":       
+                if (!currentUserRole.equals("Librarian")) {
+                    ConsoleUI.error("Only librarians can use this command.");
+                    return;
+                } 
+                handleReject(opts);
+                break;
             case "return":       handleReturn(opts);       break;
-            case "list":         handleList(opts);         break;
+            case "list":        
+                if (!currentUserRole.equals("Librarian")) {
+                    ConsoleUI.error("Only librarians can use this command.");
+                    return;
+                } 
+                handleList(opts);         
+                break;
             case "history":      handleHistory(opts, false);break;
-            case "all-history":  handleHistory(opts, true); break;
-            // case "interactive":  interactiveMenu();        break;
+            case "all-history":  
+                if (!currentUserRole.equals("Librarian")) {
+                    ConsoleUI.error("Only librarians can use this command.");
+                    return;
+                } 
+                handleHistory(opts, true); 
+                break;
+            case "pay":          handlePayment(opts, AuthHandler.requireActiveUser().getUsername()); break;
             default: printHelp();
         }
         store.save();
@@ -49,6 +80,7 @@ public class BorrowHandler {
         ConsoleUI.println("  borrow return --id ...                Mark an approved borrow as returned", ConsoleUI.WHITE);
         ConsoleUI.println("  borrow list [--status PENDING|APPROVED]   List requests by status", ConsoleUI.WHITE);
         ConsoleUI.println("  borrow history                        View your borrow history", ConsoleUI.WHITE);
+        ConsoleUI.println("  borrow pay --amount ...               Pay outstanding fees", ConsoleUI.WHITE);
         ConsoleUI.println("  borrow all-history                    View all users’ history (librarian)", ConsoleUI.WHITE);
         // ConsoleUI.println("  borrow interactive                    Enter interactive borrow menu", ConsoleUI.WHITE);
     }
@@ -73,6 +105,10 @@ public class BorrowHandler {
         Optional<Book> book = bookService.findByIsbn(bookId);
         if (book.isEmpty()) {
             ConsoleUI.error("No such book with ID " + bookId);
+            return;
+        }
+        if (!bookService.isInStock(book.get().getTitle())) {
+            ConsoleUI.error("Book out of stock.");
             return;
         }
         int reqId = store.addRequest(user, bookId);
@@ -273,6 +309,74 @@ public class BorrowHandler {
                               ConsoleUI.WHITE);
         }
     }
+
+
+    public static void payFine(String username) {
+        double fine = store.calculateFine(username);
+        if (fine <= 0) {
+            ConsoleUI.success("You have no pending fines.");
+            return;
+        }
+
+        ConsoleUI.info("Outstanding fine: ₵" + fine);
+        double payment = ConsoleUI.promptDouble("Enter amount to pay: ₵");
+        // int payment = Integer.parseInt(ConsoleUI.prompt("Enter amount to pay: ₵"));
+
+        if (payment <= 0) {
+            ConsoleUI.error("Invalid amount.");
+            return;
+        }
+
+        if (payment >= fine) {
+            store.clearFine(username);
+            store.updateApproveDate(username, LocalDate.now());
+            ConsoleUI.success("Fine cleared. Change: ₵" + (payment - fine));
+        } else {
+            store.reduceFine(username, payment);
+            ConsoleUI.success("₵" + payment + " paid. Remaining fine: ₵" + (fine - payment));
+        }
+
+    }
+
+    public static void handlePayment(Map<String, String> o, String username) {
+        double payment = 0.0;
+
+        // Validate input
+        if (!o.containsKey("amount")) {
+            ConsoleUI.error("Missing --amount argument.");
+            return;
+        }
+
+        try {
+            payment = Double.parseDouble(o.get("amount"));
+        } catch (Exception e) {
+            ConsoleUI.error("Invalid amount. Please enter a number.");
+            return;
+        }
+
+        double fine = store.calculateFine(username);
+        if (fine <= 0) {
+            ConsoleUI.success("You have no pending fines.");
+            return;
+        }
+
+        ConsoleUI.info("Outstanding fine: ₵" + fine);
+
+        if (payment <= 0) {
+            ConsoleUI.error("Payment must be greater than zero.");
+            return;
+        }
+
+        if (payment >= fine) {
+            store.clearFine(username);
+            store.updateApproveDate(username, LocalDate.now());
+            ConsoleUI.success("Fine cleared. Change: ₵" + (payment - fine));
+        } else {
+            store.reduceFine(username, payment);
+            ConsoleUI.success("₵" + payment + " paid. Remaining fine: ₵" + (fine - payment));
+        }
+    }
+
 
     
 }

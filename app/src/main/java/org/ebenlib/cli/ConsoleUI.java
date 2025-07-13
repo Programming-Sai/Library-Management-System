@@ -284,6 +284,14 @@ public class ConsoleUI {
         }
     }
 
+    public static double promptDouble(String msg) {
+        try{
+            return Double.parseDouble(prompt(msg));
+        }catch(Exception e){
+            return 0;
+        }
+    }
+
     public static int promptInt(String message, int min, int max) {
         int value;
         while (true) {

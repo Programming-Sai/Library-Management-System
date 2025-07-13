@@ -2,16 +2,19 @@ package org.ebenlib.user;
 
 public class User {
     private final String username;
+    private final String password;
     private String role;
     private boolean active;
 
-    public User(String username, String role, boolean active) {
+    public User(String username, String password, String role, boolean active) {
         this.username = username;
         this.role = role;
         this.active = active;
+        this.password = password;
     }
 
     public String getUsername() { return username; }
+    public String getPassword() { return password; }
     public String getRole() { return role; }
     public boolean isActive() { return active; }
 

@@ -138,16 +138,19 @@ public class UserHandler {
     public static void interactivePromote() {
         String user = promptUsernameSelection();
         handleRoleChange(Map.of("username", user), "Librarian");
+        store.save(); 
     }
 
     public static void interactiveDemote() {
         String user = promptUsernameSelection();
         handleRoleChange(Map.of("username", user), "Reader");
+        store.save(); 
     }
 
     public static void interactiveActivation(boolean activate) {
         String user = promptUsernameSelection();
         handleActivation(Map.of("username", user), activate);
+        store.save(); 
     }
 
     public static void interactiveDelete() {
@@ -159,6 +162,7 @@ public class UserHandler {
         } else {
             ConsoleUI.info("Delete cancelled.");
         }
+        store.save(); 
     }
 
 

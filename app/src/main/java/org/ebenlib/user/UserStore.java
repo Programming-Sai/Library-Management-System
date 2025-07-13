@@ -25,12 +25,13 @@ public class UserStore {
         try (BufferedReader r = Files.newBufferedReader(CSV)) {
             String line;
             while ((line = r.readLine()) != null) {
-                String[] f = line.trim().split(",",3);
+                String[] f = line.trim().split(",",4);
                 if (f.length < 3) continue;
                 String username = f[0].trim();
-                String role        = String.valueOf(f[1].trim().toUpperCase());
-                boolean active   = Boolean.parseBoolean(f[2].trim());
-                users.add(new User(username, role, active));
+                String password = f[1].trim();
+                String role        = f[2].trim();
+                boolean active   = Boolean.parseBoolean(f[3].trim());
+                users.add(new User(username, password, role, active));
             }
         } catch (IOException e) {
             ConsoleUI.error("Failed to load users: " + e.getMessage());
@@ -47,6 +48,7 @@ public class UserStore {
                 for (User u : users) {
                     w.write(String.join(",",
                         u.getUsername(),
+                        u.getPassword(),       // This was missing before!
                         u.getRole(),
                         Boolean.toString(u.isActive())
                     ));
@@ -78,6 +80,7 @@ public class UserStore {
     /** Change role */
     public boolean changeRole(String username, String newRole) {
         Optional<User> opt = findByUsername(username);
+        System.out.println(opt);
         if (opt.isEmpty()) return false;
         opt.get().setRole(newRole);
         return true;

@@ -169,4 +169,37 @@ public class BorrowStore {
         save(); // persist the changes
     }
 
+    public double calculateFine(String username) {
+        return listByUser(username).stream()
+            .mapToDouble(BorrowRecord::getFineOwed)
+            .sum();
+    }
+
+    public void clearFine(String username) {
+        listByUser(username).forEach(r -> r.setFineOwed(0.0));
+        save();
+    }
+
+    public void reduceFine(String username, double amount) {
+        for (BorrowRecord r : listByUser(username)) {
+            double f = r.getFineOwed();
+            if (f > 0) {
+                double deduction = Math.min(f, amount);
+                r.setFineOwed(f - deduction);
+                amount -= deduction;
+                if (amount <= 0) break;
+            }
+        }
+        save();
+    }
+
+    public void updateApproveDate(String username, LocalDate date) {
+        for (BorrowRecord r : listByUser(username)) {
+            if (r.getFineOwed() > 0) {
+                r.setApproveDate(date);
+            }
+        }
+        save();
+    }
+
 }

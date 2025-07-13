@@ -80,6 +80,7 @@ public class InteractiveMenus {
         }   
         menu.put("Request Book To Borrow",   () -> runWithPause(() -> BorrowHandler.interactiveRequest()));
         menu.put("Return Book",    () -> runWithPause(() -> BorrowHandler.handleReturnInteractive()));
+        menu.put("Pay Borrow Fine", () -> runWithPause(() -> BorrowHandler.payFine(AuthHandler.requireActiveUser().getUsername())));
         menu.put("My Borrow History",() -> runWithPause( () -> BorrowHandler.handleHistory(Map.of(), false)));
         menu.put("Back",           () -> {});
         menu.put("Exit",           () -> System.exit(0));

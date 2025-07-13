@@ -67,6 +67,16 @@ public class BorrowRecord {
             id, user, bookId, requestDate, status, fineOwed
         );
     }
+
+    public void setFineOwed(double d) {
+        this.fineOwed = d;
+    }
+
+    public void setApproveDate(LocalDate date) {
+        if (this.status == Status.APPROVED){
+            this.decisionDate = date;
+        }
+    }
 }
 
 enum Status { PENDING, APPROVED, REJECTED, RETURNED }
