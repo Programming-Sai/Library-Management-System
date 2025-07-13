@@ -170,9 +170,7 @@ public class BorrowStore {
     }
 
     public double calculateFine(String username) {
-        return listByUser(username).stream()
-            .mapToDouble(BorrowRecord::getFineOwed)
-            .sum();
+        return listByUser(username).stream().mapToDouble(BorrowRecord::getFineOwed).sum();
     }
 
     public void clearFine(String username) {
@@ -195,8 +193,15 @@ public class BorrowStore {
 
     public void updateApproveDate(String username, LocalDate date) {
         for (BorrowRecord r : listByUser(username)) {
+            // System.out.println("Decision Date: " + r.getDecisionDate() + ", Fine Owed: " + r.getFineOwed());
+            r.setApproveDate(date); // first update the date
+            r.recalculateFine();    // then recompute the fine
             if (r.getFineOwed() > 0) {
+                // System.out.println("Decision Date: " + r.getDecisionDate());
+                // System.out.println("Before: " + r.getDecisionDate());
                 r.setApproveDate(date);
+                // System.out.println("After: " + r.getDecisionDate());
+
             }
         }
         save();

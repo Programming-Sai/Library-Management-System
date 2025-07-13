@@ -339,14 +339,14 @@ public class BorrowHandler {
     }
 
     public static void handlePayment(Map<String, String> o, String username) {
-        double payment = 0.0;
+        // System.out.println("==> Running updated payment logic...");
 
-        // Validate input
         if (!o.containsKey("amount")) {
             ConsoleUI.error("Missing --amount argument.");
             return;
         }
 
+        double payment;
         try {
             payment = Double.parseDouble(o.get("amount"));
         } catch (Exception e) {
@@ -355,9 +355,10 @@ public class BorrowHandler {
         }
 
         double fine = store.calculateFine(username);
+        // System.out.println(fine + ", "+payment);
         if (fine <= 0) {
             ConsoleUI.success("You have no pending fines.");
-            return;
+            return; // Stop here — don’t process payment
         }
 
         ConsoleUI.info("Outstanding fine: ₵" + fine);
