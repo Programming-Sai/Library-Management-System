@@ -193,10 +193,11 @@ public class CommandRouter {
             ConsoleUI.println("      overdue   List overdue items", ConsoleUI.WHITE);
             ConsoleUI.println("      report    Generate reports\n", ConsoleUI.WHITE);
 
-            ConsoleUI.println("  report [top-borrowed|top-fines|category-distribution]", ConsoleUI.BRIGHT_CYAN);
-            ConsoleUI.println("      top-borrowed            Most borrowed books", ConsoleUI.WHITE);
-            ConsoleUI.println("      top-fines               Highest fines owed", ConsoleUI.WHITE);
-            ConsoleUI.println("      category-distribution   Inventory by category\n", ConsoleUI.WHITE);
+            ConsoleUI.println("  report [view|users|books|borrows]", ConsoleUI.BRIGHT_CYAN);
+            ConsoleUI.println("     report view       Full summary report", ConsoleUI.WHITE);
+            ConsoleUI.println("     report users      User statistics",    ConsoleUI.WHITE);
+            ConsoleUI.println("     report books      Book inventory stats",ConsoleUI.WHITE);
+            ConsoleUI.println("     report borrows    Borrowing activity",  ConsoleUI.WHITE);
 
             ConsoleUI.println("  test", ConsoleUI.BRIGHT_CYAN);
             ConsoleUI.println("      Run the built‑in UI demo & tests\n", ConsoleUI.WHITE);
