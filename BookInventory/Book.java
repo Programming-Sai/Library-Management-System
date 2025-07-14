@@ -1,15 +1,13 @@
-
 public class Book {
-    private String title;
-    private String author;
-    private String isbn;
-    private String category;
-    private String year;
-    private String publisher;
-    private String shelfLocation;
+    String title;
+    String author;
+    String isbn;
+    String category;
+    int year;
+    String publisher;
+    String shelfLocation;
 
-    public Book(String title, String author, String isbn, String category,
-                String year, String publisher, String shelfLocation) {
+    public Book(String title, String author, String isbn, String category, int year, String publisher, String shelfLocation) {
         this.title = title;
         this.author = author;
         this.isbn = isbn;
@@ -19,16 +17,10 @@ public class Book {
         this.shelfLocation = shelfLocation;
     }
 
-    public String getIsbn() {
-        return isbn;
-    }
-
-    public String toFileString() {
-        return title + "," + author + "," + isbn + "," + category + "," + year + "," + publisher + "," + shelfLocation;
-    }
-
     @Override
     public String toString() {
-        return "\"" + title + "\" by " + author + " (ISBN: " + isbn + ", Year: " + year + ", Publisher: " + publisher + ", Shelf: " + shelfLocation + ")";
+        return title + " by " + author + " (" + year + "), ISBN: " + isbn +
+               ", Category: " + category + ", Publisher: " + publisher +
+               ", Shelf: " + shelfLocation;
     }
 }
