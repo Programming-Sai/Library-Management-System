@@ -115,12 +115,6 @@ public class CommandRouter {
                     ConsoleUI.error("Only librarians can use this command.");
                     return;
                 }
-                // Reports & data analysis stubs
-                if (args.length < 2) {
-                    System.out.println("[REPORT] No action specified. Available: top-borrowed, top-fines, category-distribution");
-                } else {
-                    System.out.println("[REPORT] Stub: report " + args[1] + " invoked with options " + options);
-                }
                 me = AuthHandler.requireActiveUser();
                 if (me == null) return;
                 ReportHandler.handle(args, options);
