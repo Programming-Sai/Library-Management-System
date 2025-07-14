@@ -9,6 +9,7 @@ import org.ebenlib.book.BookHandler;
 import org.ebenlib.borrow.BorrowHandler;
 import org.ebenlib.cli.ConsoleUI.Colorizer;
 import org.ebenlib.profile.ProfileHandler;
+import org.ebenlib.report.ReportHandler;
 import org.ebenlib.user.User;
 import org.ebenlib.user.UserHandler;
 
@@ -74,12 +75,6 @@ public class CommandRouter {
                 me = AuthHandler.requireActiveUser();
                 if (me == null) return;
                 UserHandler.handle(args, options);
-                // // User management stubs
-                // if (args.length < 2) {
-                //     System.out.println("[USER] No action specified. Available: list, delete, promote, demote, suspend, activate");
-                // } else {
-                //     System.out.println("[USER] Stub: user " + args[1] + " invoked with options " + options);
-                // }
                 break;
 
             case "book":
@@ -95,12 +90,6 @@ public class CommandRouter {
                 break;
 
             case "profile":
-                // Profile management stubs
-                // if (args.length < 2) {
-                //     System.out.println("[PROFILE] No action specified. Available: view, update, password");
-                // } else {
-                //     System.out.println("[PROFILE] Stub: profile " + args[1] + " invoked with options " + options);
-                // }
                 me = AuthHandler.requireActiveUser();
                 if (me == null) return;
                 ProfileHandler.handle(args, options);
@@ -134,6 +123,7 @@ public class CommandRouter {
                 }
                 me = AuthHandler.requireActiveUser();
                 if (me == null) return;
+                ReportHandler.handle(args, options);
                 break;
             case "test":
                 ConsoleThemeTest.main(args);

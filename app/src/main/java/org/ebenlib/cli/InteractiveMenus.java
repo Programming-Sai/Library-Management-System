@@ -7,6 +7,7 @@ import java.util.Set;
 import org.ebenlib.book.BookHandler;
 import org.ebenlib.borrow.BorrowHandler;
 import org.ebenlib.profile.ProfileHandler;
+import org.ebenlib.report.ReportHandler;
 import org.ebenlib.user.UserHandler;
 
 public class InteractiveMenus {
@@ -120,13 +121,14 @@ public class InteractiveMenus {
     }
 
     public static Map<String, Runnable> getReportMenu(String role) {
-        Map<String, Runnable> menu = new LinkedHashMap<>();
-        if (role.equalsIgnoreCase("Librarian")) {
-            menu.put("Generate Report", () -> runWithPause(() -> stub("Generate Report")));
-        }
-        menu.put("Back",  () -> {});
-        menu.put("Exit",  () -> System.exit(0));
-        return menu;
+        Map<String,Runnable> m = new LinkedHashMap<>();
+        m.put("Full Summary", () -> runWithPause(ReportHandler::fullReport));
+        m.put("User Stats",   () -> runWithPause(ReportHandler::usersReport));
+        m.put("Book Stats",   () -> runWithPause(ReportHandler::booksReport));
+        m.put("Borrow Stats", () -> runWithPause(ReportHandler::borrowsReport));
+        m.put("Back",         () -> {});
+        m.put("Exit",         () -> System.exit(0));
+        return m;
     }
 
     private static void stub(String action) {

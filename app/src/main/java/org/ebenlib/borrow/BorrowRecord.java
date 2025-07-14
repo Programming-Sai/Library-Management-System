@@ -72,17 +72,16 @@ public class BorrowRecord {
         this.fineOwed = d;
     }
 
-public void setApproveDate(LocalDate date) {
-    // System.out.println(decisionDate + ", " + date);
-    if (this.status == Status.APPROVED) {
-        this.decisionDate = date;
-        recalculateFine();
-     }
-     // else {
-        // System.out.println("Ignored approve date update — status is " + status);
-    // }
-}
+    public void setApproveDate(LocalDate date) {
+        // System.out.println(decisionDate + ", " + date);
+        if (this.status == Status.APPROVED) {
+            this.decisionDate = date;
+            recalculateFine();
+        }
+        // else {
+            // System.out.println("Ignored approve date update — status is " + status);
+        // }
+    }
 
 }
 
-enum Status { PENDING, APPROVED, REJECTED, RETURNED }

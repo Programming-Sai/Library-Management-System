@@ -10,6 +10,7 @@ public class BorrowSettings {
     public static int    loanPeriodDays       = 14;
     public static double finePerDay           = 1.5;
     public static double fineBlockThreshold   = 10.0;
+    public static int lowStockThreshold = 10;
 
     /** Call once at app startup if you want to override defaults from a file */
     public static void loadSettings(String path) {
@@ -22,6 +23,8 @@ public class BorrowSettings {
                     finePerDay         = Double.parseDouble(line.split("=")[1].trim());
                 else if (line.startsWith("fine_block_threshold="))
                     fineBlockThreshold = Double.parseDouble(line.split("=")[1].trim());
+                else if (line.startsWith("low_stock_threshold="))
+                    lowStockThreshold = Integer.parseInt(line.split("=")[1].trim());
             }
         } catch (IOException e) {
             ConsoleUI.error("Error loading borrow settings: " + e.getMessage());
