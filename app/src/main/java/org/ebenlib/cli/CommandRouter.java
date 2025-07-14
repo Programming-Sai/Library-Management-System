@@ -1,5 +1,6 @@
 package org.ebenlib.cli;
 
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -7,13 +8,19 @@ import java.util.Map;
 
 import org.ebenlib.book.BookHandler;
 import org.ebenlib.borrow.BorrowHandler;
+import org.ebenlib.borrow.BorrowSettings;
 import org.ebenlib.cli.ConsoleUI.Colorizer;
 import org.ebenlib.profile.ProfileHandler;
 import org.ebenlib.report.ReportHandler;
+import org.ebenlib.system.SystemHandler;
 import org.ebenlib.user.User;
 import org.ebenlib.user.UserHandler;
 
 public class CommandRouter {
+
+    static{
+        BorrowSettings.loadSettings(Paths.get("app", "src", "main", "resources", "settings.txt"));
+    }
 
     public static void route(String[] args) {
         if (args.length == 0) {
@@ -100,14 +107,9 @@ public class CommandRouter {
                     ConsoleUI.error("Only librarians can use this command.");
                     return;
                 }
-                // System management stubs
-                if (args.length < 2) {
-                    System.out.println("[SYSTEM] No action specified. Available: init, stats, overdue, report");
-                } else {
-                    System.out.println("[SYSTEM] Stub: system " + args[1] + " invoked with options " + options);
-                }
                 me = AuthHandler.requireActiveUser();
                 if (me == null) return;
+                SystemHandler.handle(args, options, AuthHandler.getCurrentUser().getUsername());
                 break;
 
             case "report":

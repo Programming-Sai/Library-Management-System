@@ -279,5 +279,21 @@ public class AuthHandler {
         }
     }
 
+    public static boolean requirePassword(String username) {
+        Console console = System.console();
+        String input;
+        if (console != null) {
+            char[] pwd = console.readPassword("Enter password: ");
+            input = new String(pwd);
+        } else {
+            input = ConsoleUI.prompt("Enter password");  // fallback for IDEs or terminals with no console
+        }
+
+        if (authenticate(username, input) == null) {
+            ConsoleUI.error("Invalid password.");
+            System.exit(1);
+        }
+        return true;
+    }
 
 }

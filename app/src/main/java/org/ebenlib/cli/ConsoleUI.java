@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 public class ConsoleUI {
 
     public static final Stack<String> breadCrumbs = new Stack<>();
-    private static final Scanner scanner = new Scanner(System.in);
+    public static final Scanner scanner = new Scanner(System.in);
 
         // Reset color
     public static final String RESET = "\u001B[0m";

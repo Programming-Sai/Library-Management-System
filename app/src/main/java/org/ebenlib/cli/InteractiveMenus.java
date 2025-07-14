@@ -6,8 +6,10 @@ import java.util.Set;
 
 import org.ebenlib.book.BookHandler;
 import org.ebenlib.borrow.BorrowHandler;
+import org.ebenlib.borrow.BorrowSettings;
 import org.ebenlib.profile.ProfileHandler;
 import org.ebenlib.report.ReportHandler;
+import org.ebenlib.system.SystemHandler;
 import org.ebenlib.user.UserHandler;
 
 public class InteractiveMenus {
@@ -112,11 +114,14 @@ public class InteractiveMenus {
     public static Map<String, Runnable> getSystemMenu(String role) {
         Map<String, Runnable> menu = new LinkedHashMap<>();
         if (role.equalsIgnoreCase("Librarian")) {
-            menu.put("System Stats",  () -> runWithPause(() -> stub("System Stats")));
-            menu.put("Overdue Items", () -> runWithPause(() -> stub("Overdue Items")));
+            menu.put("Seed Demo Data", () -> runWithPause(SystemHandler::interactiveSeed));
+            menu.put("Import Data from Folder", () -> runWithPause(SystemHandler::interactiveImport));
+            menu.put("Export Data to Folder", () -> runWithPause(SystemHandler::interactiveExport));
+            menu.put("Configure Settings", () -> runWithPause(SystemHandler::interactiveConfig));
+            menu.put("View Settings", () -> runWithPause(BorrowSettings::printSettings));
         }
-        menu.put("Back",  () -> {});
-        menu.put("Exit",  () -> System.exit(0));
+        menu.put("Back", () -> {});
+        menu.put("Exit", () -> System.exit(0));
         return menu;
     }
 
@@ -131,10 +136,10 @@ public class InteractiveMenus {
         return m;
     }
 
-    private static void stub(String action) {
-        ConsoleUI.info("[Stub] " + action);
+    // private static void stub(String action) {
+        // ConsoleUI.info("[Stub] " + action);
         // Do not press any key here — `runWithPause()` handles it
-    }
+    // }
 
     public static void runWithPause(Runnable action) {
         action.run();
