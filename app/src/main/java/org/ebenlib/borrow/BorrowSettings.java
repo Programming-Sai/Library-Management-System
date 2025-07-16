@@ -3,22 +3,29 @@ package org.ebenlib.borrow;
 import org.ebenlib.cli.ConsoleUI;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
+// import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
 public class BorrowSettings {
+
     public static int    loanPeriodDays       = 14;
     public static double finePerDay           = 1.5;
     public static double fineBlockThreshold   = 10.0;
     public static int lowStockThreshold = 10;
 
+    static {
+        // System.out.println("Testing");
+        // loadSettings(Paths.get("app", "src", "main", "resources", "settings.txt"));
+    }
+
     /** Call once at app startup if you want to override defaults from a file */
     public static void loadSettings(Path folder) {
-        Path path = (folder == null) ? Path.of("resources", "settings.txt") : folder.resolve("settings.txt");
+        Path path = (folder == null) ? Path.of("resources", "settings.txt") : folder;
 
         if (!Files.exists(path)) return;
 
