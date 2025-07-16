@@ -1,0 +1,123 @@
+Here is your report formatted exactly as a plain text file (.txt) — ready to copy and save in VS Code:
+
+You can copy this entire block and save it as lending\_report.txt.
+
+───────────────────────────────────────
+📄 File: lending\_report.txt
+───────────────────────────────────────
+
+LENDING & RETURN SYSTEM — MODULE REPORT
+Developer Role: Lending & Return System
+Assigned Scope:
+ • Part 1 – Transaction Model
+ • Part 2 – LendingService Logic
+
+━━━━━━━━━━━━━━━━━━━━━━━
+PART 1: TRANSACTION.JAVA
+━━━━━━━━━━━━━━━━━━━━━━━
+
+A class representing a single lending transaction.
+
+✅ Features:
+
+* Fields:
+  • transactionId (e.g., T001)
+  • borrowerId (e.g., B003)
+  • isbn (book identifier)
+  • dateBorrowed
+  • dueDate
+  • dateReturned (nullable)
+  • finePaid (double)
+
+* Methods:
+  • toCSVRow() – serializes transaction to CSV
+  • fromCSVRow() – parses CSV into object
+  • Standard constructor, getters, and setters
+
+🧪 Tested With:
+
+* TestTransaction.java:
+  • Creates a Transaction object
+  • Serializes to CSV
+  • Deserializes back into object
+  • Prints field values for verification
+
+🛠 Technologies Used:
+
+* java.time.LocalDate
+* java.lang.String
+* No external libraries
+
+━━━━━━━━━━━━━━━━━━━━━━━
+PART 2: LENDINGSERVICE.JAVA
+━━━━━━━━━━━━━━━━━━━━━━━
+
+Handles borrowing and returning books. Persists transactions to transactions.csv.
+
+✅ Features:
+
+* loadTransactions(): Reads all transactions from file
+* saveTransactions(): Writes all transactions to file
+* generateTransactionId(): Auto-increments IDs (T001, T002…)
+* borrowBook(borrowerId, isbn):
+  • Creates a new transaction
+  • Sets due date to +14 days
+  • Saves to transactions.csv
+* returnBook(borrowerId, isbn):
+  • Searches for active borrow
+  • Marks as returned
+  • Calculates fine: GH₵0.50 per day late
+* printAllTransactions(): Displays all transactions
+
+🧪 Tested With:
+
+* TestLending.java:
+  • Simulates borrow and return
+  • Confirms persistence to CSV
+  • Verifies fine calculation
+
+📁 Sample CSV format:
+T001,B001,9780134685991,2025-07-14,2025-07-28,2025-07-14,0.0
+
+━━━━━━━━━━━━━━━━━━━━━━━
+INTEGRATION NOTES
+━━━━━━━━━━━━━━━━━━━━━━━
+
+Although not implemented by this role, LendingService is designed to work with:
+
+* BookService (Dev 1)
+   → isAvailable(), markAsBorrowed(), markAsReturned()
+
+* BorrowerService (Dev 3)
+   → recordBorrowedBook(), recordReturnedBook()
+
+Temporary in-memory/test versions were used during development for testing purposes.
+
+━━━━━━━━━━━━━━━━━━━━━━━
+DELIVERABLES COMPLETE
+━━━━━━━━━━━━━━━━━━━━━━━
+
+☑ Transaction.java
+☑ LendingService.java
+☑ TestTransaction.java
+☑ TestLending.java
+☑ Defined CSV file format (transactions.csv)
+
+━━━━━━━━━━━━━━━━━━━━━━━
+NEXT STEPS
+━━━━━━━━━━━━━━━━━━━━━━━
+
+* Expose clean public methods for CLI routing (Dev 0)
+* Optionally add methods like: borrowBookCLI(), returnBookCLI()
+* Allow Dev 6 to query fines for reports
+
+───────────────────────────────
+
+To save:
+
+1. Open VS Code
+2. Create a new file → Save as lending\_report.txt
+3. Paste the above content into the file
+4. Done!
+
+Let me know if you’d like a Markdown version too, or a .md/.pdf export.
