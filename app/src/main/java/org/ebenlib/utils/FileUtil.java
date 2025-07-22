@@ -82,7 +82,7 @@ public class FileUtil {
                 "9780307387899,The Book Thief,Markus Zusak,Historical,2005,Knopf,SH-D2,3",
                 "9780618260300,The Hobbit,J.R.R. Tolkien,Fantasy,1937,Houghton Mifflin,SH-D3,5",
                 "9780141439600,Jane Eyre,Charlotte Bronte,Classic,1847,Penguin,SH-E1,2",
-                "9780316769488,The Catcher in the Rye,J.D. Salinger,Fiction,1951,Little, Brown,SH-E2,4",
+                "9780316769488,The Catcher in the Rye,J.D. Salinger,Fiction,1951,Little Brown,SH-E2,4",
                 "9780142424179,Looking for Alaska,John Green,YA,2005,Speak,SH-E3,3",
                 "9780590353427,Harry Potter and the Chamber of Secrets,J.K. Rowling,Fantasy,1998,Scholastic,SH-F1,3",
                 "9780385472579,Zen and the Art of Motorcycle Maintenance,Robert M. Pirsig,Philosophy,1974,HarperTorch,SH-F2,1",

@@ -1,12 +1,15 @@
 package org.ebenlib.user;
 
 import org.ebenlib.cli.ConsoleUI;
+import org.ebenlib.searchsort.Searcher;
+import org.ebenlib.searchsort.Sorter;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -67,10 +70,14 @@ public class UserStore {
 
     /** Find one by exact username (case‑insensitive) */
     public Optional<User> findByUsername(String username) {
-        return users.stream()
-            .filter(u -> u.getUsername().equalsIgnoreCase(username))
-            .findFirst();
+        List<User> list = new ArrayList<>(users);
+        Comparator<User> comparator = Comparator.comparing(User::getUsername, String.CASE_INSENSITIVE_ORDER);
+        Sorter.mergeSort(list, comparator);
+        User key = new User(username); // assumes constructor User(String username)
+        int index = Searcher.binarySearch(list, key, comparator);
+        return index >= 0 ? Optional.of(list.get(index)) : Optional.empty();
     }
+
 
     /** Remove by username */
     public boolean delete(String username) {

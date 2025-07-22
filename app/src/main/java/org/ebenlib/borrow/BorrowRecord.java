@@ -21,6 +21,11 @@ public class BorrowRecord {
         this.status = status;
     }
 
+    public BorrowRecord(int id) {
+        this.id = id;
+    }
+
+
     // getters...
 
     public int getId()            { return id; }

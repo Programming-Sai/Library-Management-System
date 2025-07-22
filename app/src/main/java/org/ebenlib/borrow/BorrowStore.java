@@ -1,6 +1,8 @@
 package org.ebenlib.borrow;
 
 import org.ebenlib.cli.ConsoleUI;
+import org.ebenlib.searchsort.Searcher;
+import org.ebenlib.searchsort.Sorter;
 
 import java.io.*;
 import java.nio.file.*;
@@ -78,17 +80,23 @@ public class BorrowStore {
     }
 
     public boolean updateStatus(int id, Status to) {
-        for (BorrowRecord r : cache) {
-            if (r.getId() == id) {
-                r.setStatus(to);
-                return true;
-            }
+        Comparator<BorrowRecord> byId = Comparator.comparingInt(BorrowRecord::getId);
+        int index = Searcher.binarySearch(cache, new BorrowRecord(id), byId);
+        if (index != -1) {
+            cache.get(index).setStatus(to);
+            return true;
         }
         return false;
     }
 
+
     public BorrowRecord findById(int id) {
-        return cache.stream().filter(r -> r.getId() == id).findFirst().orElse(null);
+        List<BorrowRecord> records = new ArrayList<>(cache);
+        Comparator<BorrowRecord> comparator = Comparator.comparingInt(BorrowRecord::getId);
+        Sorter.mergeSort(records, comparator);
+        BorrowRecord key = new BorrowRecord(id); // assumes constructor BorrowRecord(int id)
+        int index = Searcher.binarySearch(records, key, comparator);
+        return index >= 0 ? records.get(index) : null;
     }
 
     public List<BorrowRecord> listByStatus(Status st) {
@@ -193,15 +201,10 @@ public class BorrowStore {
 
     public void updateApproveDate(String username, LocalDate date) {
         for (BorrowRecord r : listByUser(username)) {
-            // System.out.println("Decision Date: " + r.getDecisionDate() + ", Fine Owed: " + r.getFineOwed());
-            r.setApproveDate(date); // first update the date
-            r.recalculateFine();    // then recompute the fine
+            r.setApproveDate(date); 
+            r.recalculateFine();   
             if (r.getFineOwed() > 0) {
-                // System.out.println("Decision Date: " + r.getDecisionDate());
-                // System.out.println("Before: " + r.getDecisionDate());
                 r.setApproveDate(date);
-                // System.out.println("After: " + r.getDecisionDate());
-
             }
         }
         save();

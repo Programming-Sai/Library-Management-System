@@ -13,6 +13,11 @@ public class User {
         this.password = password;
     }
 
+    public User(String username){
+        this.username = username;
+        this.password = "";
+    }
+
     public String getUsername() { return username; }
     public String getPassword() { return password; }
     public String getRole() { return role; }

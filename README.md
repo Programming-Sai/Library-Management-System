@@ -18,6 +18,10 @@ A Java‑based, offline‑first, console‑driven library management CLI. Writte
 For dev, use the utility psh script to run
 
 ```psh
+  ./run.ps1 --interactive
+
+  # For help.
+
   .\run.ps1 --help
 
 ```
@@ -62,42 +66,43 @@ ebenlib <command> [options]
 
 ### Core Commands
 
-| Command                        | Description                                                                    |
-| ------------------------------ | ------------------------------------------------------------------------------ |
-| `--interactive`                | Launch the interactive, menu‑driven UI                                         |
-| `auth signin`                  | Sign in to your account                                                        |
-| `auth signup`                  | Register a new Reader or Librarian                                             |
-| `auth signout`                 | Sign out of the current session                                                |
-| `user list`                    | List all users (Librarian only)                                                |
-| `user delete`                  | Delete a user account                                                          |
-| `user promote`                 | Promote a user to Librarian                                                    |
-| `user demote`                  | Demote a Librarian to Reader                                                   |
-| `user suspend`                 | Suspend a user’s account                                                       |
-| `user activate`                | Reactivate a suspended user                                                    |
-| `book add`                     | Add a book to inventory (Librarian only)                                       |
-| `book update`                  | Update book details                                                            |
-| `book delete`                  | Remove a book from inventory                                                   |
-| `book list`                    | List all books                                                                 |
-| `book search`                  | Search books by title/author/ISBN                                              |
-| `book stats`                   | Show stats for a given book (times borrowed, overdue count, etc.)              |
-| `borrow request`               | Request to borrow a book                                                       |
-| `borrow approve`               | Approve a borrow request (Librarian only)                                      |
-| `borrow reject`                | Reject a borrow request (Librarian only)                                       |
-| `borrow return`                | Return a borrowed book                                                         |
-| `borrow list`                  | List all pending borrow requests                                               |
-| `borrow history`               | Show your personal borrowing history                                           |
-| `profile view`                 | View your user profile                                                         |
-| `profile update`               | Update your username                                                           |
-| `profile password`             | Change your password                                                           |
-| `system init`                  | Initialize or reset system data (Librarian only)                               |
-| `system stats`                 | Show system usage statistics                                                   |
-| `system overdue`               | List all overdue items and fines                                               |
-| `system report`                | Generate system‑wide reports (most borrowed, top fines, category distribution) |
-| `report top‑borrowed`          | Report: top borrowed books                                                     |
-| `report top‑fines`             | Report: borrowers with highest outstanding fines                               |
-| `report category‑distribution` | Report: inventory distribution by category                                     |
-| `test`                         | Run the built‑in console UI tests                                              |
-| `--help`, `-h`                 | Show this help message                                                         |
+| Command            | Description                                                       |
+| ------------------ | ----------------------------------------------------------------- |
+| `--interactive`    | Launch the interactive, menu‑driven UI                            |
+| `auth signin`      | Sign in to your account                                           |
+| `auth signup`      | Register a new Reader or Librarian                                |
+| `auth signout`     | Sign out of the current session                                   |
+| `user list`        | List all users (Librarian only)                                   |
+| `user delete`      | Delete a user account                                             |
+| `user promote`     | Promote a user to Librarian                                       |
+| `user demote`      | Demote a Librarian to Reader                                      |
+| `user deactivate`  | Suspend a user’s account                                          |
+| `user activate`    | Reactivate a suspended user                                       |
+| `book add`         | Add a book to inventory (Librarian only)                          |
+| `book update`      | Update book details                                               |
+| `book delete`      | Remove a book from inventory                                      |
+| `book list`        | List all books                                                    |
+| `book search`      | Search books by title/author/ISBN                                 |
+| `book stats`       | Show stats for a given book (times borrowed, overdue count, etc.) |
+| `borrow request`   | Request to borrow a book                                          |
+| `borrow approve`   | Approve a borrow request (Librarian only)                         |
+| `borrow reject`    | Reject a borrow request (Librarian only)                          |
+| `borrow return`    | Return a borrowed book                                            |
+| `borrow list`      | List all pending borrow requests                                  |
+| `borrow history`   | Show your personal borrowing history                              |
+| `profile view`     | View your user profile                                            |
+| `profile update`   | Update your username                                              |
+| `profile password` | Change your password                                              |
+| `system seed`      | Initialize or reset system data (Librarian only)                  |
+| `system import`    | allows to get in data from external sources                       |
+| `system export`    | allows for backing up data                                        |
+| `system config`    | allows for configuring some system functions                      |
+| `report views`     | Report: summary stats                                             |
+| `report books`     | Report: book report stats                                         |
+| `report borrows`   | Report: borrow stats                                              |
+| `report users`     | Report: user stats                                                |
+| `test`             | Run the built‑in console UI tests                                 |
+| `--help`, `-h`     | Show this help message                                            |
 
 ---
 

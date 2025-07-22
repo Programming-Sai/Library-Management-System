@@ -305,8 +305,7 @@ public class BorrowHandler {
         ConsoleUI.header("📈 Top Debtors");
         for (int i = 1; i <= topN && !pq.isEmpty(); i++) {
             var e = pq.poll();
-            ConsoleUI.println(String.format("%d. %s – $%.2f", i, e.getKey(), e.getValue()),
-                              ConsoleUI.WHITE);
+            ConsoleUI.println(String.format("%d. %s – $%.2f", i, e.getKey(), e.getValue()), ConsoleUI.WHITE);
         }
     }
 

@@ -63,8 +63,8 @@ public class InteractiveMenus {
         if (role.equalsIgnoreCase("Librarian")) {
             menu.put("Add Book",    () -> runWithPause(BookHandler::interactiveAdd));
             menu.put("Delete Book", () -> runWithPause(BookHandler::interactiveDelete));
-            menu.put("Update Book", () -> runWithPause(BookHandler::interactiveUpdate));
-            menu.put("Stats and Analytics", () -> runWithPause(BookHandler::interactiveStats));
+            // menu.put("Update Book", () -> runWithPause(BookHandler::interactiveUpdate));
+            // menu.put("Stats and Analytics", () -> runWithPause(BookHandler::interactiveStats));
         }
         menu.put("List Books", () -> runWithPause(BookHandler::handleList));
         menu.put("Search Books", () -> runWithPause(() -> BookHandler.interactiveSearch()));
