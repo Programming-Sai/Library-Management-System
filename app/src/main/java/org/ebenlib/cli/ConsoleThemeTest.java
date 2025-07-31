@@ -1,7 +1,7 @@
 package org.ebenlib.cli;
 
-import java.util.ArrayList;
-import java.util.List;
+
+import org.ebenlib.ds.EbenLibList;
 
 public class ConsoleThemeTest {
     public static void main(String[] args) {
@@ -23,7 +23,7 @@ public class ConsoleThemeTest {
         int[] colWidths = {10, 50, 30};
         TablePrinter.printHeader(headers, colWidths);
 
-        List<String[]> books = new ArrayList<>();
+        EbenLibList<String[]> books = new EbenLibList<>();
         for (int i = 1; i <= 25; i++) {
             books.add(new String[]{
                 "B" + i,

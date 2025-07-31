@@ -1,15 +1,13 @@
 package org.ebenlib.cli;
 
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import org.ebenlib.book.BookHandler;
 import org.ebenlib.borrow.BorrowHandler;
 import org.ebenlib.borrow.BorrowSettings;
 import org.ebenlib.cli.ConsoleUI.Colorizer;
+import org.ebenlib.ds.EbenLibList;
+import org.ebenlib.ds.EbenLibMap;
 import org.ebenlib.profile.ProfileHandler;
 import org.ebenlib.report.ReportHandler;
 import org.ebenlib.system.SystemHandler;
@@ -29,7 +27,7 @@ public class CommandRouter {
         }
 
         String command = args[0];
-        Map<String, String> options = parseOptions(args);
+        EbenLibMap<String, String> options = parseOptions(args);
         String currentUserRole;
         if (AuthHandler.getCurrentUser() != null){
             currentUserRole = AuthHandler.getCurrentUser().getRole();
@@ -44,12 +42,13 @@ public class CommandRouter {
                 InteractiveShell shell;
 
             // ── Welcome Screen (runs only once) ─────────────────────────
-                List<String> gradientColors = Arrays.asList(
+                String[] colors = {
                     ConsoleUI.BLUE,
                     ConsoleUI.CYAN,
                     ConsoleUI.PURPLE
-                );
+                };
 
+                EbenLibList<String> gradientColors = EbenLibList.from(colors);
                 Colorizer slantedColorizer = ConsoleUI.gradientColorizer(gradientColors, 30.0);
                 ConsoleUI.printLogo(slantedColorizer);
                 System.out.println("\n");
@@ -139,7 +138,7 @@ public class CommandRouter {
 
     private static void printHelp() {
             // build a 30° slanted gradient from BLUE → CYAN → PURPLE
-            List<String> gradient = Arrays.asList(ConsoleUI.BLUE, ConsoleUI.CYAN, ConsoleUI.PURPLE);
+            EbenLibList<String> gradient = EbenLibList.from(new String[]{ConsoleUI.BLUE, ConsoleUI.CYAN, ConsoleUI.PURPLE});
             Colorizer colorFn = ConsoleUI.gradientColorizer(gradient, 30);
 
             // render our ASCII logo in gradient
@@ -152,7 +151,7 @@ public class CommandRouter {
             ConsoleUI.println("Available Commands:", ConsoleUI.UNDERLINE);
 
             ConsoleUI.println("  --interactive", ConsoleUI.BRIGHT_CYAN);
-            ConsoleUI.println("      Launch interactive TUI mode\n", ConsoleUI.WHITE);
+            ConsoleUI.println("      Launch interactive GUI mode\n", ConsoleUI.WHITE);
 
             ConsoleUI.println("  auth [signin|signup|signout]", ConsoleUI.BRIGHT_CYAN);
             ConsoleUI.println("      signin    Sign in", ConsoleUI.WHITE);
@@ -213,8 +212,8 @@ public class CommandRouter {
             ConsoleUI.println("  ebenlib --interactive", ConsoleUI.WHITE);
         }
         
-    private static Map<String, String> parseOptions(String[] args) {
-        Map<String, String> options = new HashMap<>();
+    private static EbenLibMap<String, String> parseOptions(String[] args) {
+        EbenLibMap<String, String> options = new EbenLibMap<>();
         for (int i = 1; i < args.length; i++) {
             String arg = args[i];
 

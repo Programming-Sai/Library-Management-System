@@ -3,18 +3,18 @@ package org.ebenlib.profile;
 
 import org.ebenlib.cli.ConsoleUI;
 import org.ebenlib.cli.TablePrinter;
+import org.ebenlib.ds.EbenLibList;
+import org.ebenlib.ds.EbenLibMap;
 import org.ebenlib.user.User;
 import org.ebenlib.user.UserStore;
 import org.ebenlib.borrow.BorrowHandler;
 import org.ebenlib.cli.AuthHandler;
 
-import java.util.Collections;
-// import java.util.List;
-import java.util.Map;
+
 
 public class ProfileHandler {
 
-    public static void handle(String[] args, Map<String, String> opts) {
+    public static void handle(String[] args, EbenLibMap<String, String> opts) {
         if (args.length < 2) {
             printHelp();    
             return;
@@ -42,13 +42,13 @@ public class ProfileHandler {
             current.getRole(),
             current.isActive() ? "Active" : "Suspended"
         };
-        // List<String[]> data = List.of(row);
-        // TablePrinter.
-        TablePrinter.printHeader(new String[]{"Username", "Role", "Status"}, new int[]{20, 10, 10});
-        TablePrinter.printTable(Collections.singletonList(row), 12, new int[]{20, 10, 10});
 
+        TablePrinter.printHeader(new String[]{"Username", "Role", "Status"}, new int[]{20, 10, 10});
+        EbenLibList<String[]> tempList = new EbenLibList<>();
+        tempList.add(row);
+        TablePrinter.printTable(tempList, 12, new int[]{20, 10, 10});
         ConsoleUI.info("Borrow History:");
-        BorrowHandler.handleHistory(Collections.emptyMap(), false);
+        BorrowHandler.handleHistory(EbenLibMap.<String, String>empty(), false);
     }
 
 

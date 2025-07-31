@@ -1,6 +1,8 @@
 package org.ebenlib.user;
 
 import org.ebenlib.cli.ConsoleUI;
+import org.ebenlib.ds.EbenLibList;
+import org.ebenlib.ds.EbenLibComparator;
 import org.ebenlib.searchsort.Searcher;
 import org.ebenlib.searchsort.Sorter;
 
@@ -8,9 +10,6 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -19,7 +18,7 @@ import java.util.Optional;
  */
 public class UserStore {
     private static final Path CSV = Paths.get("app","src","main","resources","users.csv");
-    private final List<User> users = new ArrayList<>();
+    private final EbenLibList<User> users = new EbenLibList<>();
 
     /** Load all users from CSV into memory */
     public void load() {
@@ -64,14 +63,14 @@ public class UserStore {
     }
 
     /** Return a defensive copy of all users */
-    public List<User> listAll() {
-        return new ArrayList<>(users);
+    public EbenLibList<User> listAll() {
+        return new EbenLibList<>(users);
     }
 
     /** Find one by exact username (case‑insensitive) */
     public Optional<User> findByUsername(String username) {
-        List<User> list = new ArrayList<>(users);
-        Comparator<User> comparator = Comparator.comparing(User::getUsername, String.CASE_INSENSITIVE_ORDER);
+        EbenLibList<User> list = new EbenLibList<>(users);
+        EbenLibComparator<User> comparator = EbenLibComparator.comparing(User::getUsername, String.CASE_INSENSITIVE_ORDER);
         Sorter.mergeSort(list, comparator);
         User key = new User(username); // assumes constructor User(String username)
         int index = Searcher.binarySearch(list, key, comparator);
@@ -104,8 +103,16 @@ public class UserStore {
     // Update username
 public static boolean rename(String oldName, String newName) {
     try {
-        List<String> lines = Files.readAllLines(CSV);
-        List<String> updated = new ArrayList<>();
+        EbenLibList<String> lines = new EbenLibList<>();
+        try (BufferedReader reader = Files.newBufferedReader(CSV)) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                lines.add(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        EbenLibList<String> updated = new EbenLibList<>();
         for (String line : lines) {
             String[] parts = line.split(",");
             if (parts[0].equals(oldName)) {
@@ -125,8 +132,17 @@ public static boolean rename(String oldName, String newName) {
     // Update password
     public static boolean updatePassword(String username, String newPwd) {
         try {
-            List<String> lines = Files.readAllLines(CSV);
-            List<String> updated = new ArrayList<>();
+            EbenLibList<String> lines = new EbenLibList<>();
+
+            try (BufferedReader reader = Files.newBufferedReader(CSV)) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    lines.add(line);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            EbenLibList<String> updated = new EbenLibList<>();
             for (String line : lines) {
                 String[] parts = line.split(",");
                 if (parts[0].equals(username)) {

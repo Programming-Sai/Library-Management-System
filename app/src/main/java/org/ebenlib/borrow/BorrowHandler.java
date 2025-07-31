@@ -5,12 +5,17 @@ import org.ebenlib.book.BookService;
 import org.ebenlib.cli.AuthHandler;
 import org.ebenlib.cli.ConsoleUI;
 import org.ebenlib.cli.TablePrinter;
+import org.ebenlib.ds.EbenLibComparator;
+import org.ebenlib.ds.EbenLibFunction;
+import org.ebenlib.ds.EbenLibList;
+import org.ebenlib.ds.EbenLibMap;
+import org.ebenlib.ds.EbenLibMapEntry;
+import org.ebenlib.ds.EbenLibPriorityQueue;
 
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class BorrowHandler {
 
@@ -23,7 +28,7 @@ public class BorrowHandler {
         store.refreshAllFines();
     }
 
-    public static void handle(String[] args, Map<String,String> opts) {
+    public static void handle(String[] args, EbenLibMap<String,String> opts) {
         String currentUserRole;
         if (AuthHandler.getCurrentUser() != null){
             currentUserRole = AuthHandler.getCurrentUser().getRole();
@@ -87,7 +92,7 @@ public class BorrowHandler {
 
     // — Non‑interactive —
 
-    public static void handleRequest(Map<String,String> o) {
+    public static void handleRequest(EbenLibMap<String,String> o) {
         String user   = AuthHandler.getCurrentUser().getUsername(); 
         double outstanding = store.getTotalFineForUser(user);
         if (outstanding > BorrowSettings.fineBlockThreshold) {
@@ -115,7 +120,7 @@ public class BorrowHandler {
         ConsoleUI.success("Request submitted (ID=" + reqId + ")");
     }
 
-    public static void handleApprove(Map<String,String> o) {
+    public static void handleApprove(EbenLibMap<String,String> o) {
         int id = parseId(o.get("id"), "approve");
         if (store.updateStatus(id, Status.APPROVED)) {
             ConsoleUI.success("Request #" + id + " approved");
@@ -124,7 +129,7 @@ public class BorrowHandler {
         }
     }
 
-    public static void handleReject(Map<String,String> o) {
+    public static void handleReject(EbenLibMap<String,String> o) {
         int id = parseId(o.get("id"), "reject");
         if (store.updateStatus(id, Status.REJECTED)) {
             ConsoleUI.success("Request #" + id + " rejected");
@@ -133,7 +138,7 @@ public class BorrowHandler {
         }
     }
 
-    public static void handleReturn(Map<String,String> o) {
+    public static void handleReturn(EbenLibMap<String,String> o) {
         int id = parseId(o.get("id"), "return");
         if (store.updateStatus(id, Status.RETURNED)) {
             ConsoleUI.success("Request #" + id + " marked returned");
@@ -142,18 +147,16 @@ public class BorrowHandler {
         }
     }
 
-    public static void handleList(Map<String,String> o) {
+    public static void handleList(EbenLibMap<String,String> o) {
         Status st = o.containsKey("status")
             ? Status.valueOf(o.get("status").toUpperCase())
             : Status.PENDING;
-        List<BorrowRecord> recs = store.listByStatus(st);
+        EbenLibList<BorrowRecord> recs = store.listByStatus(st);
         renderTable(recs);
     }
 
-    public static void handleHistory(Map<String,String> o, boolean allUsers) {
-        List<BorrowRecord> recs = allUsers
-            ? store.listAll()
-            : store.listByUser(AuthHandler.getCurrentUser().getUsername());
+    public static void handleHistory(EbenLibMap<String,String> o, boolean allUsers) {
+        EbenLibList<BorrowRecord> recs = allUsers ? store.listAll() : store.listByUser(AuthHandler.getCurrentUser().getUsername());
         renderTable(recs);
     }
 
@@ -165,21 +168,20 @@ public class BorrowHandler {
         }
     }
 
-    public static void renderTable(List<BorrowRecord> recs) {
+    public static void renderTable(EbenLibList<BorrowRecord> recs) {
         if (recs.isEmpty()) {
             ConsoleUI.info("No records to display.");
             return;
         }
         DateTimeFormatter df = DateTimeFormatter.ISO_LOCAL_DATE;
-        List<String[]> rows = recs.stream()
-            .map(r -> new String[] {
+        EbenLibList<String[]> rows = recs.map(r -> new String[] {
                 String.valueOf(r.getId()),
                 r.getUser(),
                 r.getBookId(),
                 r.getDecisionDate() == null ? "" : r.getDecisionDate().format(df),
                 r.getStatus().name(),
                 String.format("%.2f", r.getFineOwed())
-            }).collect(Collectors.toList());
+            });
         String[] hdr = {"ID","User","Book","Decided","Status","Fine"};
         int[] widths = {4,15,10,12,10,6};
         TablePrinter.printHeader(hdr, widths);
@@ -191,7 +193,7 @@ public class BorrowHandler {
         ConsoleUI.header("Search and request a book");
 
         String query = ConsoleUI.prompt("Search book by title (leave blank to list all): ");
-        List<Book> books = query.isBlank()
+        EbenLibList<Book> books = query.isBlank()
             ? bookService.listAll()
             : bookService.searchByTitle(query);
 
@@ -215,14 +217,14 @@ public class BorrowHandler {
         Book selected = books.get(choice - 1);
         String bookId = selected.getIsbn();
 
-        handleRequest(Map.of("book-id", bookId));
+        handleRequest(EbenLibMap.of("book-id", bookId));
         store.save();
         ConsoleUI.pressEnterToContinue();
     }
 
 
     public static void interactiveApproveReject() {
-        List<BorrowRecord> pending = store.listByStatus(Status.PENDING);
+        EbenLibList<BorrowRecord> pending = store.listByStatus(Status.PENDING);
 
         if (pending.isEmpty()) {
             ConsoleUI.warning("No pending requests.");
@@ -259,9 +261,7 @@ public class BorrowHandler {
     public static void handleReturnInteractive() {
         String currentUser = AuthHandler.getCurrentUser().getUsername();
 
-        List<BorrowRecord> borrowed = store.listByUser(currentUser).stream()
-            .filter(r -> r.getStatus() == Status.APPROVED)
-            .collect(Collectors.toList());
+        EbenLibList<BorrowRecord> borrowed = store.listByUser(currentUser).filter(r -> r.getStatus() == Status.APPROVED);
 
         if (borrowed.isEmpty()) {
             ConsoleUI.info("You have no approved books to return.");
@@ -285,22 +285,26 @@ public class BorrowHandler {
         BorrowRecord selected = borrowed.get(choice - 1);
         String id = String.valueOf(selected.getId());
 
-        handleReturn(Map.of("id", id));
+        handleReturn(EbenLibMap.of("id", id));
         store.save();
         ConsoleUI.pressEnterToContinue();
     }
 
     /** Show top debtors — statistically in “stats” section */
     public static void showTopDebtors(int topN) {
-        Map<String, Double> fines = new HashMap<>();
+        EbenLibMap<String, Double> fines = new EbenLibMap<>();
         store.listAll().stream()
             .filter(r -> r.getStatus() == Status.APPROVED)
             .forEach(r -> fines.merge(r.getUser(), r.getFineOwed(), Double::sum));
 
-        PriorityQueue<Map.Entry<String,Double>> pq = new PriorityQueue<>(
-            (a,b) -> Double.compare(b.getValue(), a.getValue())
-        );
-        pq.addAll(fines.entrySet());
+        EbenLibPriorityQueue<EbenLibMapEntry<String, Double>> pq = new EbenLibPriorityQueue<>(
+                EbenLibComparator.comparing((EbenLibFunction<EbenLibMapEntry<String, Double>, Double>) EbenLibMapEntry::getValue).reversed()
+            );
+
+        for (EbenLibMapEntry<String, Double> entry : fines.entrySet()) {
+            pq.offer(entry);
+        }
+
 
         ConsoleUI.header("📈 Top Debtors");
         for (int i = 1; i <= topN && !pq.isEmpty(); i++) {
@@ -337,7 +341,7 @@ public class BorrowHandler {
 
     }
 
-    public static void handlePayment(Map<String, String> o, String username) {
+    public static void handlePayment(EbenLibMap<String, String> o, String username) {
         // System.out.println("==> Running updated payment logic...");
 
         if (!o.containsKey("amount")) {

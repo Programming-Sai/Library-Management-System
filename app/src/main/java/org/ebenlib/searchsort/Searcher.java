@@ -1,13 +1,15 @@
 package org.ebenlib.searchsort;
 
 
-import java.util.*;
+
+import org.ebenlib.ds.EbenLibComparator;
+import org.ebenlib.ds.EbenLibList;
 
 
 
 
 public class Searcher {
-    public static <T> int binarySearch(List<T> list, T target, Comparator<T> comparator) {
+    public static <T> int binarySearch(EbenLibList<T> list, T target, EbenLibComparator<T> comparator) {
         int low = 0, high = list.size() - 1;
 
         while (low <= high) {

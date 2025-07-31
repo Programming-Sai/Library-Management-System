@@ -1,6 +1,10 @@
 package org.ebenlib.report;
 
 import org.ebenlib.cli.ConsoleUI;
+import org.ebenlib.ds.EbenLibComparator;
+import org.ebenlib.ds.EbenLibList;
+import org.ebenlib.ds.EbenLibMap;
+import org.ebenlib.ds.EbenLibMapEntry;
 import org.ebenlib.searchsort.Sorter;
 import org.ebenlib.user.UserStore;
 import org.ebenlib.book.BookService;
@@ -13,8 +17,6 @@ import org.ebenlib.borrow.BorrowSettings;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.stream.Collectors;
 
 public class ReportHandler {
     private static final UserStore   userStore   = new UserStore();
@@ -27,7 +29,7 @@ public class ReportHandler {
     }
 
     /** Entry point for CLI: report [view|users|books|borrows] */
-    public static void handle(String[] args, Map<String,String> opts) {
+    public static void handle(String[] args, EbenLibMap<String,String> opts) {
         if (args.length < 2) {
             printHelp(); return;
         }
@@ -62,7 +64,7 @@ public class ReportHandler {
 
     // ── USERS ─────────────────────────────────────────────────────────────────────
     public static void usersReport() {
-        List<org.ebenlib.user.User> all = userStore.listAll();
+        EbenLibList<org.ebenlib.user.User> all = userStore.listAll();
         long total     = all.size();
         long active    = all.stream().filter(u->u.isActive()).count();
         long suspended = total - active;
@@ -73,10 +75,7 @@ public class ReportHandler {
         ConsoleUI.println(String.format("  Suspended users: %d", suspended), ConsoleUI.WHITE);
 
         // Recent 5 users
-        List<String> recent = all.stream()
-            .map(u->u.getUsername())
-            .skip(Math.max(0, total-5))
-            .collect(Collectors.toList());
+        EbenLibList<String> recent = all.map(u->u.getUsername()).skip((int)Math.max(0, total-5));
         if (!recent.isEmpty()) {
             ConsoleUI.println("  Recent users   : " + String.join(", ", recent), ConsoleUI.WHITE);
         }
@@ -84,7 +83,7 @@ public class ReportHandler {
 
     // ── BOOKS ─────────────────────────────────────────────────────────────────────  
     public static void booksReport() {
-        List<Book> books = bookService.listAll();
+        EbenLibList<Book> books = bookService.listAll();
         long totalBooks = books.size();
 
         int totalStock = 0;
@@ -94,7 +93,7 @@ public class ReportHandler {
 
         // low‑stock threshold
         int threshold = BorrowSettings.lowStockThreshold;
-        List<Book> lowStock = new ArrayList<>();
+        EbenLibList<Book> lowStock = new EbenLibList<>();
         for (Book b : books) {
             if (b.getQuantity() < threshold) {
                 lowStock.add(b);
@@ -102,23 +101,42 @@ public class ReportHandler {
         }
 
         // by category
-        Map<String, Long> byCat = new HashMap<>();
+        EbenLibMap<String, Long> byCat = new EbenLibMap<>();
         for (Book b : books) {
             String cat = b.getCategory();
             byCat.put(cat, byCat.getOrDefault(cat, 0L) + 1);
         }
 
         // most borrowed
-        Map<String, Long> borrowCounts = new HashMap<>();
-        List<BorrowRecord> borrows = borrowStore.listAll();
+        EbenLibMap<String, Long> borrowCounts = new EbenLibMap<>();
+        EbenLibList<BorrowRecord> borrows = borrowStore.listAll();
         for (BorrowRecord r : borrows) {
             String isbn = r.getBookId();
             borrowCounts.put(isbn, borrowCounts.getOrDefault(isbn, 0L) + 1);
         }
+        
+        // 1) Build your own list of entries
+        EbenLibList<EbenLibMapEntry<String, Long>> topBooks = new EbenLibList<>();
+        for (EbenLibMapEntry<String, Long> e : borrowCounts.entrySet()) {
+            topBooks.add(e);
+        }
 
-        List<Map.Entry<String, Long>> topBooks = new ArrayList<>(borrowCounts.entrySet());
-        Comparator<Map.Entry<String, Long>> cmp = Comparator.comparing(Map.Entry::getValue, Comparator.reverseOrder());
-        Sorter.mergeSort(topBooks, cmp);
+        // 2) Create a reversed‑value comparator
+        EbenLibComparator<Long> longNatural = EbenLibComparator.<Long>naturalOrder();
+        EbenLibComparator<Long> longReversed = EbenLibComparator.reverseOrder(longNatural);
+
+        // 3) Now build an entry comparator that compares by value using the reversed long comparator
+        EbenLibComparator<EbenLibMapEntry<String, Long>> bookCountCmp =
+            EbenLibComparator.comparing(EbenLibMapEntry::getValue, longReversed);
+
+        // 4) Sort your list
+        Sorter.mergeSort(topBooks, bookCountCmp);
+
+        // 5) Trim to top 5
+        if (topBooks.size() > 5) {
+            topBooks = topBooks.subList(0, 5);
+        }
+
 
         if (topBooks.size() > 5) {
             topBooks = topBooks.subList(0, 5);
@@ -130,7 +148,7 @@ public class ReportHandler {
         ConsoleUI.println(String.format("  Low-stock (< %d copies)  : %d", threshold, lowStock.size()), ConsoleUI.WHITE);
 
         ConsoleUI.println("\n  By Category:", ConsoleUI.BOLD);
-        for (Map.Entry<String, Long> entry : byCat.entrySet()) {
+        for (EbenLibMapEntry<String, Long> entry : byCat.entrySet()) {
             ConsoleUI.println(String.format("    %-15s : %d", entry.getKey(), entry.getValue()), ConsoleUI.WHITE);
         }
 
@@ -155,7 +173,7 @@ public class ReportHandler {
 
     // ── BORROWS ────────────────────────────────────────────────────────────────────  
     public static void borrowsReport() {
-        List<BorrowRecord> recs = borrowStore.listAll();
+        EbenLibList<BorrowRecord> recs = borrowStore.listAll();
         long total = recs.size();
         long returned = 0, pending = 0, approved = 0, overdue = 0;
 
@@ -172,17 +190,21 @@ public class ReportHandler {
         }
 
         // top borrowers
-        Map<String, Long> userCounts = new HashMap<>();
+        EbenLibMap<String, Long> userCounts = new EbenLibMap<>();
         for (BorrowRecord r : recs) {
             if (r.getStatus() == Status.APPROVED || r.getStatus() == Status.RETURNED) {
                 String user = r.getUser();
                 userCounts.put(user, userCounts.getOrDefault(user, 0L) + 1);
             }
         }
-
-        List<Map.Entry<String, Long>> topUsers = new ArrayList<>(userCounts.entrySet());
-        Comparator<Map.Entry<String, Long>> cmp = Comparator.comparing(Map.Entry::getValue, Comparator.reverseOrder());
-        Sorter.mergeSort(topUsers, cmp);
+        // Build list of entries
+        EbenLibList<EbenLibMapEntry<String, Long>> topUsers = userCounts.entrySet();
+        // Comparator for counts, descending
+        EbenLibComparator<Long> longRev = EbenLibComparator.<Long>reverseOrder(EbenLibComparator.naturalOrder());
+        EbenLibComparator<EbenLibMapEntry<String, Long>> userCmp =
+            EbenLibComparator.comparing(EbenLibMapEntry::getValue, longRev);
+        // Sort and trim
+        Sorter.mergeSort(topUsers, userCmp);
         if (topUsers.size() > 5) {
             topUsers = topUsers.subList(0, 5);
         }
@@ -207,16 +229,35 @@ public class ReportHandler {
             }
         }
         // ✅ HIGHEST TOTAL FINES
-        Map<String, Double> fines = new HashMap<>();
+        EbenLibMap<String, Double> fines = new EbenLibMap<>();
         for (BorrowRecord r : recs) {
             String user = r.getUser();
             double f = r.getFineOwed();
             if (f > 0) fines.put(user, fines.getOrDefault(user, 0.0) + f);
         }
 
-        List<Map.Entry<String, Double>> topFines = new ArrayList<>(fines.entrySet());
-        Comparator<Map.Entry<String, Double>> comparator = Comparator.comparing(Map.Entry::getValue, Comparator.reverseOrder());
-        Sorter.mergeSort(topFines, comparator);
+        // 1) Manually populate your EbenLibList of fines entries
+        EbenLibList<EbenLibMapEntry<String, Double>> topFines = new EbenLibList<>();
+        for (EbenLibMapEntry<String, Double> e : fines.entrySet()) {
+            if (e.getValue() > 0) {
+                topFines.add(e);
+            }
+        }
+
+        // 2) Build & reverse a Double comparator
+        EbenLibComparator<Double> dblNatural = EbenLibComparator.<Double>naturalOrder();
+        EbenLibComparator<Double> dblReversed = EbenLibComparator.reverseOrder(dblNatural);
+
+        // 3) Comparator for entries by their Double value
+        EbenLibComparator<EbenLibMapEntry<String, Double>> fineCmp =
+            EbenLibComparator.comparing(EbenLibMapEntry::getValue, dblReversed);
+
+        // 4) Sort and keep top 5
+        Sorter.mergeSort(topFines, fineCmp);
+        if (topFines.size() > 5) {
+            topFines = topFines.subList(0, 5);
+        }
+
         if (topFines.size() > 5) topFines = topFines.subList(0, 5); 
 
         ConsoleUI.println("\n  Top Outstanding Fines:", ConsoleUI.BOLD);
@@ -233,14 +274,23 @@ public class ReportHandler {
         }
 
         // ✅ BORROWING TRENDS (by request date)
-        Map<LocalDate, Long> byDate = recs.stream()
-            .collect(Collectors.groupingBy(BorrowRecord::getRequestDate, TreeMap::new, Collectors.counting()));
+        EbenLibMap<LocalDate, Long> byDate = EbenLibMap.empty();
+        for (BorrowRecord r : recs) {
+            LocalDate date = r.getRequestDate();
+            Long prev = byDate.get(date);
+            if (prev == null) prev = 0L;
+            byDate.put(date, prev + 1L);
+        }
+
+        // 2) (Optional) If you want to iterate in date order, sort the dates:
+        EbenLibList<LocalDate> dates = byDate.keySet();
+        Sorter.mergeSort(dates, EbenLibComparator.naturalOrder());
 
         ConsoleUI.println("\n  Borrowing Trends (by Date):", ConsoleUI.BOLD);
         if (byDate.isEmpty()) {
             ConsoleUI.println("    (no borrowing activity)", ConsoleUI.DIM);
         } else {
-            for (Map.Entry<LocalDate, Long> entry : byDate.entrySet()) {
+            for (EbenLibMapEntry<LocalDate, Long> entry : byDate.entrySet()) {
                 ConsoleUI.println(
                     String.format("    %s — %d request(s)", entry.getKey(), entry.getValue()),
                     ConsoleUI.WHITE

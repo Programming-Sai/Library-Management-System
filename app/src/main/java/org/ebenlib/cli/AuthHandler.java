@@ -8,9 +8,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Map;
-// import java.util.Scanner;
 
+import org.ebenlib.ds.EbenLibMap;
 import org.ebenlib.user.User;
 import org.ebenlib.user.UserStore;
 
@@ -32,7 +31,7 @@ public class AuthHandler {
     
     // private static final Scanner fallbackScanner = new Scanner(System.in);
 
-    public static void handle(String[] args, Map<String, String> opts) {
+    public static void handle(String[] args, EbenLibMap<String, String> opts) {
         if (args.length < 2) {
             printHelp();
             return;

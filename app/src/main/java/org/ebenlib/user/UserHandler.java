@@ -2,10 +2,9 @@ package org.ebenlib.user;
 
 import org.ebenlib.cli.ConsoleUI;
 import org.ebenlib.cli.TablePrinter;
+import org.ebenlib.ds.EbenLibList;
+import org.ebenlib.ds.EbenLibMap;
 
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public class UserHandler {
 
@@ -15,7 +14,7 @@ public class UserHandler {
         store.load();
     }
 
-    public static void handle(String[] args, Map<String, String> opts) {
+    public static void handle(String[] args, EbenLibMap<String, String> opts) {
         if (args.length < 2) {
             printHelp();
             return;
@@ -45,28 +44,25 @@ public class UserHandler {
     }
 
     public static void handleList() {
-        List<User> all = store.listAll();
+        EbenLibList<User> all = store.listAll();
         if (all.isEmpty()) {
             ConsoleUI.info("No users available.");
             return;
         }
 
         // Build rows: Username | Role | Status
-        List<String[]> rows = all.stream()
-            .map(u -> new String[]{
+        EbenLibList<String[]> rows = all.map(u -> new String[]{
                 u.getUsername(),
                 u.getRole(),
                 u.isActive() ? "Active" : "Deactivated"
-            })
-            .collect(Collectors.toList());
-
+            });
         String[] headers = {"Username", "Role", "Status"};
         int[] widths = {20, 12, 12};
         TablePrinter.printHeader(headers, widths);
         TablePrinter.printTable(rows, 10, widths);
     }
 
-    public static void handleDelete(Map<String,String> o) {
+    public static void handleDelete(EbenLibMap<String,String> o) {
         String user = o.get("username");
         if (user == null) {
             ConsoleUI.error("Missing --username");
@@ -79,7 +75,7 @@ public class UserHandler {
         }
     }
 
-    public static void handleRoleChange(Map<String,String> o, String newRole) {
+    public static void handleRoleChange(EbenLibMap<String,String> o, String newRole) {
         String user = o.get("username");
         if (user == null) {
             ConsoleUI.error("Missing --username");
@@ -92,7 +88,7 @@ public class UserHandler {
         }
     }
 
-    public static void handleActivation(Map<String,String> o, boolean activate) {
+    public static void handleActivation(EbenLibMap<String,String> o, boolean activate) {
         String user = o.get("username");
         if (user == null) {
             ConsoleUI.error("Missing --username");
@@ -107,7 +103,7 @@ public class UserHandler {
 
 
     public static String promptUsernameSelection() {
-        List<User> users = store.listAll();
+        EbenLibList<User> users = store.listAll();
         if (users.isEmpty()) {
             ConsoleUI.error("No users found.");
             return null;
@@ -137,19 +133,19 @@ public class UserHandler {
 
     public static void interactivePromote() {
         String user = promptUsernameSelection();
-        handleRoleChange(Map.of("username", user), "Librarian");
+        handleRoleChange(EbenLibMap.of("username", user), "Librarian");
         store.save(); 
     }
 
     public static void interactiveDemote() {
         String user = promptUsernameSelection();
-        handleRoleChange(Map.of("username", user), "Reader");
+        handleRoleChange(EbenLibMap.of("username", user), "Reader");
         store.save(); 
     }
 
     public static void interactiveActivation(boolean activate) {
         String user = promptUsernameSelection();
-        handleActivation(Map.of("username", user), activate);
+        handleActivation(EbenLibMap.of("username", user), activate);
         store.save(); 
     }
 
@@ -158,7 +154,7 @@ public class UserHandler {
         ConsoleUI.warning("Are you sure you want to delete " + user + "? This cannot be undone.");
         String confirm = ConsoleUI.prompt("Type 'yes' to confirm:");
         if (confirm.equalsIgnoreCase("yes")) {
-            handleDelete(Map.of("username", user));
+            handleDelete(EbenLibMap.of("username", user));
         } else {
             ConsoleUI.info("Delete cancelled.");
         }

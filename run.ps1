@@ -1,4 +1,4 @@
-.\gradlew installDist
+# .\gradlew installDist
 
 
 $script = Join-Path $PSScriptRoot "app\build\install\app\bin\app.bat"

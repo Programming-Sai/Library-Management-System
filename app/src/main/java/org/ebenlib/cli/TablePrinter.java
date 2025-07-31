@@ -1,7 +1,7 @@
 package org.ebenlib.cli;
 
-import java.util.ArrayList;
-import java.util.List;
+import org.ebenlib.ds.EbenLibList;
+
 import java.util.Scanner;
 
 public class TablePrinter {
@@ -10,8 +10,8 @@ public class TablePrinter {
     private static final int COLUMN_WIDTH = 20;
 
     // Split a string into multiple lines that fit the column width
-    private static List<String> wrapText(String text, int width) {
-        List<String> lines = new ArrayList<>();
+    private static EbenLibList<String> wrapText(String text, int width) {
+        EbenLibList<String> lines = new EbenLibList<>();
         int length = text.length();
         for (int i = 0; i < length; i += width) {
             int end = Math.min(i + width, length);
@@ -21,24 +21,24 @@ public class TablePrinter {
     }
 
     // Format a row into wrapped lines with correct column widths
-    private static List<String> formatRow(String[] row, String rowColor, int[] colWidths) {
-        List<List<String>> wrappedCells = new ArrayList<>();
+    private static EbenLibList<String> formatRow(String[] row, String rowColor, int[] colWidths) {
+        EbenLibList<EbenLibList<String>> wrappedCells = new EbenLibList<>();
         int maxLines = 0;
 
         for (int i = 0; i < row.length; i++) {
             int width = i < colWidths.length ? colWidths[i] : COLUMN_WIDTH;
-            List<String> lines = wrapText(row[i] == null ? "" : row[i], width);
+            EbenLibList<String> lines = wrapText(row[i] == null ? "" : row[i], width);
             wrappedCells.add(lines);
             maxLines = Math.max(maxLines, lines.size());
         }
 
-        List<String> formattedLines = new ArrayList<>();
+        EbenLibList<String> formattedLines = new EbenLibList<>();
 
         for (int lineIndex = 0; lineIndex < maxLines; lineIndex++) {
             StringBuilder line = new StringBuilder("|");
             for (int colIndex = 0; colIndex < wrappedCells.size(); colIndex++) {
                 int width = colIndex < colWidths.length ? colWidths[colIndex] : COLUMN_WIDTH;
-                List<String> lines = wrappedCells.get(colIndex);
+                EbenLibList<String> lines = wrappedCells.get(colIndex);
                 String cellLine = (lineIndex < lines.size()) ? lines.get(lineIndex) : "";
                 line.append(" ")
                     .append(rowColor)
@@ -81,7 +81,7 @@ public class TablePrinter {
             printHeader(headers, widths);
         }
 
-    public static void printTable(List<String[]> rows, int pageSize, int[] colWidths) {
+    public static void printTable(EbenLibList<String[]> rows, int pageSize, int[] colWidths) {
         int total = rows.size();
         int current = 0;
 
@@ -91,7 +91,7 @@ public class TablePrinter {
             for (int i = current; i < end; i++) {
                 String[] row = rows.get(i);
                 String rowColor = (i % 2 == 0) ? ConsoleUI.WHITE : ConsoleUI.BG_BRIGHT_BLACK + ConsoleUI.WHITE;
-                List<String> formattedLines = formatRow(row, rowColor, colWidths);
+                EbenLibList<String> formattedLines = formatRow(row, rowColor, colWidths);
                 for (String line : formattedLines) {
                     System.out.println(line);
                 }
@@ -109,7 +109,7 @@ public class TablePrinter {
         }
     }
 
-    public static void printTable(List<String[]> rows) {
+    public static void printTable(EbenLibList<String[]> rows) {
         int[] widths = new int[rows.size()];
         for (int i = 0; i < rows.size(); i ++){
             widths[i] = COLUMN_WIDTH;
@@ -117,7 +117,7 @@ public class TablePrinter {
         printTable(rows, DEFAULT_PAGE_SIZE, widths);
     }
 
-    public static void printTable(List<String[]> rows, int pageSize) {
+    public static void printTable(EbenLibList<String[]> rows, int pageSize) {
         int[] widths = new int[rows.size()];
         for (int i = 0; i < rows.size(); i ++){
             widths[i] = COLUMN_WIDTH;

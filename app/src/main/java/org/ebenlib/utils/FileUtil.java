@@ -4,12 +4,11 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.ebenlib.cli.AuthHandler;
 import org.ebenlib.cli.ConsoleUI;
+import org.ebenlib.ds.EbenLibFunction;
+import org.ebenlib.ds.EbenLibList;
 import org.ebenlib.user.User;
 
 public class FileUtil {
@@ -17,39 +16,49 @@ public class FileUtil {
     /**
      * Read every line of the CSV at `path`, parse with `mapper`, return the list.
      */
-    public static <T> List<T> readCSV(Path path, Function<String, T> mapper) {
+    public static <T> EbenLibList<T> readCSV(Path path, EbenLibFunction<String, T> mapper) {
+        EbenLibList<T> result = EbenLibList.empty();
         try {
-            if (Files.notExists(path)) return new ArrayList<>();
-            return Files.readAllLines(path, StandardCharsets.UTF_8).stream()
-                    .filter(line -> !line.isBlank())
-                    .map(mapper)
-                    .collect(Collectors.toList());
+            if (Files.notExists(path)) return result;
+            for (String line : Files.readAllLines(path, StandardCharsets.UTF_8)) {
+                if (!line.isBlank()) {
+                    result.add(mapper.apply(line));
+                }
+            }
+            return result;
         } catch (IOException e) {
-            throw new RuntimeException("Failed to read CSV " + path + ": " + e.getMessage(), e);
+            throw new RuntimeException("Failed to read CSV " + path, e);
         }
     }
+
 
     /**
      * Write `items` to CSV at `path`, one line per item via `toCsv`.
      * Overwrites existing file.
      */
-    public static <T> void writeCSV(Path path, List<T> items, Function<T, String> toCsv) {
+    public static <T> void writeCSV(Path path,
+                                    EbenLibList<T> items,
+                                    EbenLibFunction<T, String> toCsv) {
         try {
-            List<String> lines = items.stream()
-                                      .map(toCsv)
-                                      .collect(Collectors.toList());
-            Files.write(path, lines, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
+            // map each item → CSV line
+            EbenLibList<String> lines = items.map(toCsv);
+            // write out
+            Files.write(path,
+                        lines,
+                        StandardCharsets.UTF_8,
+                        StandardOpenOption.TRUNCATE_EXISTING);
         } catch (IOException e) {
             throw new RuntimeException("Failed to write CSV " + path + ": " + e.getMessage(), e);
         }
     }
+
 
     public static void writeDemoData() {
         Path base = Path.of("app", "src", "main", "resources");
         try {
             Files.createDirectories(base);
 
-            List<String> users = new ArrayList<>(List.of(
+            EbenLibList<String> users = new EbenLibList<>(EbenLibList.of(
                 "admin,admin,Librarian,true",
                 "Mark Grayson,nolaN,Librarian,true",
                 "Debby Grayson,nolan,Reader,true",

@@ -1,6 +1,10 @@
 package org.ebenlib.borrow;
 
 import org.ebenlib.cli.ConsoleUI;
+import org.ebenlib.ds.EbenLibComparator;
+import org.ebenlib.ds.EbenLibList;
+import org.ebenlib.ds.EbenLibMap;
+import org.ebenlib.ds.EbenLibPriorityQueue;
 import org.ebenlib.searchsort.Searcher;
 import org.ebenlib.searchsort.Sorter;
 
@@ -8,12 +12,10 @@ import java.io.*;
 import java.nio.file.*;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.stream.Collectors;
 
 public class BorrowStore {
     private final Path file;
-    private final List<BorrowRecord> cache = new ArrayList<>();
+    private final EbenLibList<BorrowRecord> cache = new EbenLibList<>();
     private int nextId = 1;
 
     public BorrowStore(Path file) {
@@ -80,7 +82,7 @@ public class BorrowStore {
     }
 
     public boolean updateStatus(int id, Status to) {
-        Comparator<BorrowRecord> byId = Comparator.comparingInt(BorrowRecord::getId);
+        EbenLibComparator<BorrowRecord> byId = EbenLibComparator.comparing(BorrowRecord::getId);
         int index = Searcher.binarySearch(cache, new BorrowRecord(id), byId);
         if (index != -1) {
             cache.get(index).setStatus(to);
@@ -91,41 +93,44 @@ public class BorrowStore {
 
 
     public BorrowRecord findById(int id) {
-        List<BorrowRecord> records = new ArrayList<>(cache);
-        Comparator<BorrowRecord> comparator = Comparator.comparingInt(BorrowRecord::getId);
+        EbenLibList<BorrowRecord> records = new EbenLibList<>(cache);
+        EbenLibComparator<BorrowRecord> comparator = EbenLibComparator.comparing(BorrowRecord::getId);
         Sorter.mergeSort(records, comparator);
         BorrowRecord key = new BorrowRecord(id); // assumes constructor BorrowRecord(int id)
         int index = Searcher.binarySearch(records, key, comparator);
         return index >= 0 ? records.get(index) : null;
     }
 
-    public List<BorrowRecord> listByStatus(Status st) {
-        return cache.stream()
-            .filter(r -> r.getStatus() == st)
-            .collect(Collectors.toList());
+    public EbenLibList<BorrowRecord> listByStatus(Status st) {
+        return cache.filter(r -> r.getStatus() == st);
     }
 
-    public List<BorrowRecord> listAll() {
-        return new ArrayList<>(cache);
+    public EbenLibList<BorrowRecord> listAll() {
+        return new EbenLibList<>(cache);
     }
 
-    public List<BorrowRecord> listByUser(String user) {
-        return cache.stream()
-            .filter(r -> r.getUser().equalsIgnoreCase(user))
-            .collect(Collectors.toList());
+    public EbenLibList<BorrowRecord> listByUser(String user) {
+        return cache.filter(r -> r.getUser().equalsIgnoreCase(user));
     }
 
     /** Builds a PQ of overdue records (earliest approval first) */
-    public PriorityQueue<BorrowRecord> getOverdueQueue(int overdueDays) {
+    public EbenLibPriorityQueue<BorrowRecord> getOverdueQueue(int overdueDays) {
         LocalDate threshold = LocalDate.now().minusDays(overdueDays);
-        PriorityQueue<BorrowRecord> pq = new PriorityQueue<>(Comparator.comparing(r -> r.getDecisionDate()));
-        cache.stream()
-            .filter(r -> r.getStatus() == Status.APPROVED
-                      && r.getDecisionDate() != null
-                      && r.getDecisionDate().isBefore(threshold))
-            .forEach(pq::add);
+        EbenLibComparator<BorrowRecord> comp =
+            EbenLibComparator.comparing(BorrowRecord::getDecisionDate);
+
+        EbenLibPriorityQueue<BorrowRecord> pq = new EbenLibPriorityQueue<>(comp);
+
+        for (BorrowRecord r : cache) {
+            if (r.getStatus() == Status.APPROVED &&
+                r.getDecisionDate() != null &&
+                r.getDecisionDate().isBefore(threshold)) {
+                pq.offer(r);
+            }
+        }
         return pq;
     }
+
 
     /** Total fine across all APPROVED (not yet returned) records for this user */
     public double getTotalFineForUser(String username) {
@@ -136,10 +141,17 @@ public class BorrowStore {
             .sum();
     }
     
-    public Map<String, Long> countBorrowsByUser() {
-        return cache.stream()
-            .filter(r -> r.getStatus() == Status.APPROVED || r.getStatus() == Status.RETURNED)
-            .collect(Collectors.groupingBy(BorrowRecord::getUser, Collectors.counting()));
+    public EbenLibMap<String, Long> countBorrowsByUser() {
+        EbenLibMap<String, Long> counts = EbenLibMap.empty();
+        for (BorrowRecord r : cache) {
+            if (r.getStatus() == Status.APPROVED || r.getStatus() == Status.RETURNED) {
+                String user = r.getUser();
+                Long previous = counts.get(user);
+                if (previous == null) previous = 0L;
+                counts.put(user, previous + 1L);
+            }
+        }
+        return counts;
     }
 
     public long countByBook(String bookId) {

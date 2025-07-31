@@ -1,14 +1,16 @@
 package org.ebenlib.searchsort;
 
-import java.util.*;
+
+import org.ebenlib.ds.EbenLibComparator;
+import org.ebenlib.ds.EbenLibList;
 
 public class Sorter {
-    public static <T> void mergeSort(List<T> list, Comparator<T> comparator) {
+    public static <T> void mergeSort(EbenLibList<T> list, EbenLibComparator<T> comparator) {
         if (list.size() <= 1) return;
 
         int mid = list.size() / 2;
-        List<T> left = new ArrayList<>(list.subList(0, mid));
-        List<T> right = new ArrayList<>(list.subList(mid, list.size()));
+        EbenLibList<T> left = new EbenLibList<>(list.subList(0, mid));
+        EbenLibList<T> right = new EbenLibList<>(list.subList(mid, list.size()));
 
         mergeSort(left, comparator);
         mergeSort(right, comparator);
@@ -16,7 +18,7 @@ public class Sorter {
         merge(list, left, right, comparator);
     }
 
-    private static <T> void merge(List<T> list, List<T> left, List<T> right, Comparator<T> comparator) {
+    private static <T> void merge(EbenLibList<T> list, EbenLibList<T> left, EbenLibList<T> right, EbenLibComparator<T> comparator) {
         int i = 0, j = 0, k = 0;
 
         while (i < left.size() && j < right.size()) {

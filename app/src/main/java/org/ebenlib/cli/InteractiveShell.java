@@ -1,11 +1,11 @@
 package org.ebenlib.cli;
 
 // import java.io.IOException;
-import java.util.ArrayList;
 // import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
+
+import org.ebenlib.ds.EbenLibList;
+import org.ebenlib.ds.EbenLibMap;
 
 // import org.ebenlib.cli.ConsoleUI.Colorizer;
 
@@ -22,7 +22,7 @@ public class InteractiveShell {
         // }
     }
 
-    public void run(Map<String, Runnable> menu) {
+    public void run(EbenLibMap<String, Runnable> menu) {
         // int x = 0;
         // ── Main Menu Loop ───────────────────────────────────────────
         while (true) {
@@ -31,7 +31,8 @@ public class InteractiveShell {
             ConsoleUI.clearScreen();
             ConsoleUI.showBreadCrumbs();
             ConsoleUI.header("🕹️  " + username + " (" + role + ") — Select an option");
-            List<String> options = new ArrayList<>(menu.keySet());
+            String[] keys = menu.keySet().toArray(new String[0]);
+            EbenLibList<String> options = EbenLibList.from(keys);
             for (int i = 0; i < options.size(); i++) {
                 // number in bright cyan, text in bold white
                 ConsoleUI.print("  " + (i + 1) + ". ", ConsoleUI.BRIGHT_CYAN);

@@ -2,15 +2,16 @@ package org.ebenlib.book;
 
 import org.ebenlib.cli.ConsoleUI;
 import org.ebenlib.cli.TablePrinter;
+import org.ebenlib.ds.EbenLibList;
+import org.ebenlib.ds.EbenLibMap;
+
 import java.nio.file.Paths;
-import java.util.*;
-import java.util.stream.Collectors;
 
 public class BookHandler {
 
     public static final BookService svc = new BookService(Paths.get("app", "src", "main", "resources", "books.csv"));
 
-    public static void handle(String[] args, Map<String,String> opts) {
+    public static void handle(String[] args, EbenLibMap<String,String> opts) {
         if (args.length < 2) {
             printHelp();
             return;
@@ -22,9 +23,6 @@ public class BookHandler {
             case "list":    handleList();       break;
             case "search":  handleSearch(opts); break;
             case "stats":   handleStats(opts);  break;
-            // case "interactive":
-                // interactiveMenu();
-                // break;
             default:
                 printHelp();
         }
@@ -42,7 +40,7 @@ public class BookHandler {
 
     // — Non‑interactive handlers —
 
-    public static void handleAdd(Map<String, String> o) {
+    public static void handleAdd(EbenLibMap<String, String> o) {
         try {
             String isbn = o.get("isbn");
             String title = o.get("title");
@@ -86,7 +84,7 @@ public class BookHandler {
         }
     }
 
-    public static void handleUpdate(Map<String,String> o) {
+    public static void handleUpdate(EbenLibMap<String,String> o) {
         String isbn = o.get("isbn");
         if (isbn == null) {
             ConsoleUI.error("Missing --isbn for update.");
@@ -113,7 +111,7 @@ public class BookHandler {
         }, () -> ConsoleUI.error("No book found with ISBN " + isbn));
     }
 
-    public static void handleDelete(Map<String,String> o) {
+    public static void handleDelete(EbenLibMap<String,String> o) {
         String isbn = o.get("isbn");
         if (isbn == null) {
             ConsoleUI.error("Missing --isbn for delete.");
@@ -127,30 +125,28 @@ public class BookHandler {
     }
 
     public static void handleList() {
-        List<Book> all = svc.listAll();
+        EbenLibList<Book> all = svc.listAll();
         if (all.isEmpty()) {
             ConsoleUI.info("No books in catalog.");
             return;
         }
         // build rows: isbn, title, author, year, qty
-        List<String[]> rows = all.stream()
-            .map(b -> new String[]{
+        EbenLibList<String[]> rows = all.map(b -> new String[]{
                 b.getIsbn(),
                 b.getTitle(),
                 b.getAuthor(),
                 String.valueOf(b.getYear()),
                 String.valueOf(b.getQuantity()),
                 b.getShelf()
-            })
-            .collect(Collectors.toList());
+            });
         String[] headers = {"ISBN","Title","Author","Year","Qty", "Shelf"};
         int[] widths = {15, 30, 20, 6, 4, 8};
         TablePrinter.printHeader(headers, widths);
         TablePrinter.printTable(rows, 10, widths);
     }
 
-    private static void handleSearch(Map<String,String> o) {
-        List<Book> found = Collections.emptyList();
+    private static void handleSearch(EbenLibMap<String,String> o) {
+        EbenLibList<Book> found = new EbenLibList<>();
         if (o.containsKey("title")) {
             found = svc.searchByTitle(o.get("title"));
         } else if (o.containsKey("author")) {
@@ -167,24 +163,33 @@ public class BookHandler {
             String[] headers = {"ISBN","Title","Author","Shelf", "Category", "Publisher","Year","Qty"};
             int[]   widths  = {15,30,20,8, 15, 20, 6,4};
             TablePrinter.printHeader(headers, widths);
-            List<String[]> rows = found.stream()
-            .map(b -> new String[]{
-                b.getIsbn(), b.getTitle(), b.getAuthor(),
-                b.getShelf(), b.getCategory(), b.getPublisher(), String.valueOf(b.getYear()),
+            EbenLibList<String[]> rows = found.map(b -> new String[]{
+                b.getIsbn(),
+                b.getTitle(),
+                b.getAuthor(),
+                b.getShelf(),
+                b.getCategory(),
+                b.getPublisher(),
+                String.valueOf(b.getYear()),
                 String.valueOf(b.getQuantity())
-            }).collect(Collectors.toList());
+            });
             TablePrinter.printTable(rows, widths.length*2, widths);
         }
     }
 
-    private static void handleStats(Map<String,String> o) {
+    private static void handleStats(EbenLibMap<String,String> o) {
         String isbn = o.get("isbn");
         if (isbn == null) {
             ConsoleUI.error("Missing --isbn for stats.");
             return;
         }
-        BookStats stats = svc.stats(isbn);
-        ConsoleUI.println(stats.toString(), ConsoleUI.CYAN);
+        svc.findByIsbn(isbn).ifPresentOrElse(book -> {
+            // 'book' is a Book, so you can call getTitle() and getAuthor()
+            BookStats stats = svc.stats(isbn, book.getTitle(), book.getAuthor());
+            ConsoleUI.println(stats.toString(), ConsoleUI.CYAN);
+        }, () -> {
+            ConsoleUI.error("No book found with ISBN " + isbn);
+        });
     }
 
     public static void interactiveAdd() {
@@ -221,9 +226,9 @@ public class BookHandler {
         String field = ConsoleUI.prompt("Search by (title/author/category):").toLowerCase();
         String q     = ConsoleUI.prompt("Query:");
         switch (field) {
-            case "title"   -> handleSearch(Map.of("title", q));
-            case "author"  -> handleSearch(Map.of("author", q));
-            case "category"-> handleSearch(Map.of("category", q));
+            case "title"   -> handleSearch(EbenLibMap.of("title", q));
+            case "author"  -> handleSearch(EbenLibMap.of("author", q));
+            case "category"-> handleSearch(EbenLibMap.of("category", q));
             default        -> ConsoleUI.error("Unknown field.");
         }
         ConsoleUI.pressEnterToContinue();
@@ -231,19 +236,63 @@ public class BookHandler {
 
     public static void interactiveUpdate() {
         String isbn = ConsoleUI.prompt("ISBN to update:");
-        handleUpdate(Map.of("isbn", isbn));  // will prompt for missing fields?
+        if (isbn == null || isbn.isBlank()) {
+            ConsoleUI.error("ISBN is required.");
+            return;
+        }
+
+        // Build a map of only the fields the user wants to change
+        EbenLibMap<String, String> updates = EbenLibMap.empty();
+        updates.put("isbn", isbn);
+
+        // For each field: prompt with instructions to hit ENTER to skip
+        String title = ConsoleUI.prompt("Title (leave blank to keep current):");
+        if (title != null && !title.isBlank()) {
+            updates.put("title", title);
+        }
+
+        String author = ConsoleUI.prompt("Author (leave blank to keep current):");
+        if (author != null && !author.isBlank()) {
+            updates.put("author", author);
+        }
+
+        String category = ConsoleUI.prompt("Category (leave blank to keep current):");
+        if (category != null && !category.isBlank()) {
+            updates.put("category", category);
+        }
+
+        String yearStr = ConsoleUI.prompt("Year (leave blank to keep current):");
+        if (yearStr != null && !yearStr.isBlank()) {
+            updates.put("year", yearStr);
+        }
+
+        String publisher = ConsoleUI.prompt("Publisher (leave blank to keep current):");
+        if (publisher != null && !publisher.isBlank()) {
+            updates.put("publisher", publisher);
+        }
+
+        String shelf = ConsoleUI.prompt("Shelf (leave blank to keep current):");
+        if (shelf != null && !shelf.isBlank()) {
+            updates.put("shelf", shelf);
+        }
+
+        String qtyStr = ConsoleUI.prompt("Quantity (leave blank to keep current):");
+        if (qtyStr != null && !qtyStr.isBlank()) {
+            updates.put("qty", qtyStr);
+        }
+        handleUpdate(updates);  // will prompt for missing fields?
         ConsoleUI.pressEnterToContinue();
     }
 
     public static void interactiveDelete() {
         String isbn = ConsoleUI.prompt("ISBN to delete:");
-        handleDelete(Map.of("isbn", isbn));
+        handleDelete(EbenLibMap.of("isbn", isbn));
         ConsoleUI.pressEnterToContinue();
     }
 
     public static void interactiveStats() {
         String isbn = ConsoleUI.prompt("ISBN for stats:");
-        handleStats(Map.of("isbn", isbn));
+        handleStats(EbenLibMap.of("isbn", isbn));
         ConsoleUI.pressEnterToContinue();
     }
 

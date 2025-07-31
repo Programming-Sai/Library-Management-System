@@ -2,19 +2,19 @@ package org.ebenlib.system;
 
 import org.ebenlib.cli.AuthHandler;
 import org.ebenlib.cli.ConsoleUI;
+import org.ebenlib.ds.EbenLibMap;
 import org.ebenlib.utils.FileUtil;
 import org.ebenlib.borrow.BorrowSettings;
 
 import java.io.File;
-// import java.io.IOException;
-import java.util.Map;
-// import java.util.Scanner;
+
+
 
 public class SystemHandler {
     public static boolean DEV_MODE = true; // toggle off when packaging
 
 
-    public static void handle(String[] args, Map<String, String> options, String username) {
+    public static void handle(String[] args, EbenLibMap<String, String> options, String username) {
         if (args.length < 2) {
             ConsoleUI.error("Missing system command.");
             return;
@@ -68,7 +68,7 @@ public class SystemHandler {
         ConsoleUI.success("Demo data seeded.");
     }
 
-    private static void importData(Map<String, String> options, String username) {
+    private static void importData(EbenLibMap<String, String> options, String username) {
         if (!options.containsKey("file")) {
             ConsoleUI.error("Missing --file <folderPath>");
             return;
@@ -79,7 +79,7 @@ public class SystemHandler {
         ConsoleUI.success("Data imported successfully.");
     }
 
-    private static void exportData(Map<String, String> options, String username) {
+    private static void exportData(EbenLibMap<String, String> options, String username) {
         if (!options.containsKey("file")) {
             ConsoleUI.error("Missing --file <folderPath>");
             return;
@@ -91,7 +91,7 @@ public class SystemHandler {
         ConsoleUI.success("Data exported successfully.");
     }
 
-    private static void handleConfig(String[] args, Map<String, String> options, String username) {
+    private static void handleConfig(String[] args, EbenLibMap<String, String> options, String username) {
         if (args.length < 3) {
             ConsoleUI.error("Missing config subcommand.");
             return;

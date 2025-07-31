@@ -1,14 +1,14 @@
 package org.ebenlib.cli;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Scanner;
-import java.util.Stack;
-import java.util.stream.Collectors;
+
+import org.ebenlib.ds.EbenLibList;
+import org.ebenlib.ds.EbenLibStack;
 
 public class ConsoleUI {
 
-    public static final Stack<String> breadCrumbs = new Stack<>();
+    public static final EbenLibStack<String> breadCrumbs = new EbenLibStack<>();
     public static final Scanner scanner = new Scanner(System.in);
 
         // Reset color
@@ -186,7 +186,30 @@ public class ConsoleUI {
     }
 
     public static void showBreadCrumbs() {
-        String path = breadCrumbs.stream().collect(Collectors.joining(" " + ConsoleUI.CYAN + ">" + ConsoleUI.RESET + " "));
+        EbenLibList<String> crumbs = new EbenLibList<>();
+        EbenLibStack<String> temp = new EbenLibStack<>();
+
+        // Unwind stack into temp and crumbs
+        while (!breadCrumbs.isEmpty()) {
+            String crumb = breadCrumbs.pop();
+            temp.push(crumb);         // Save to restore later
+            crumbs.add(crumb);        // Build list for joining
+        }
+
+        // Restore original stack
+        while (!temp.isEmpty()) {
+            breadCrumbs.push(temp.pop());
+        }
+
+        // Now join crumbs manually
+        StringBuilder pathBuilder = new StringBuilder();
+        for (int i = crumbs.size() - 1; i >= 0; i--) {
+            pathBuilder.append(crumbs.get(i));
+            if (i > 0) {
+                pathBuilder.append(" ").append(ConsoleUI.CYAN).append(">").append(ConsoleUI.RESET).append(" ");
+            }
+        }
+        String path = pathBuilder.toString();
         System.out.println(ConsoleUI.BOLD + path + ConsoleUI.RESET);
         System.out.println(); // spacing
     }
@@ -359,7 +382,7 @@ public class ConsoleUI {
         }
     }
 
-    public static Colorizer gradientColorizer(List<String> colors, double angleDegrees) {
+    public static Colorizer gradientColorizer(EbenLibList<String> colors, double angleDegrees) {
         return (line, lineIndex) -> {
             if (colors.isEmpty()) return line; // Fallback
 
