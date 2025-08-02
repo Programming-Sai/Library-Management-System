@@ -1,0 +1,4 @@
+loan_period_days=15
+fine_per_day=3.0
+fine_block_threshold=10.0
+low_stock_threshold=50

@@ -1,3 +1,11 @@
+<p align="center">
+  <img src="./app/ebenlib.ico" alt="Logo" style="border-radius: 50%; background: white;" width="100" height="100"/>
+</p>
+
+<br/>
+<br/>
+<br/>
+
 ![Deme](./demo.png)
 
 # EbenLib Library Management System
@@ -26,34 +34,43 @@ For dev, use the utility psh script to run
 
 ```
 
-### Install as a Global Command
+---
 
-1. Build your native image or Jar:
+### Packaging
 
-   ```bash
-   ./gradlew build
+#### ⭑ Native Windows EXE (via GraalVM native-image)
+
+1. Install GraalVM 21 CE and set `JAVA_HOME` →
+
+   ```powershell
+   $env:JAVA_HOME = 'C:\graalvm\jdk-21.0.2'
+   $env:Path = "$env:JAVA_HOME\bin;$env:Path"
    ```
 
-2. (Optional, for Jar) Create a launcher script named `ebenlib`:
+2. Ensure you have **Visual Studio Build Tools** (for `cl.exe`).
+3. Build the “fat-jar” + native image:
 
    ```bash
-   #!/usr/bin/env bash
-   java -jar /full/path/to/ebenlib.jar "$@"
+   ./gradlew clean nativeImage
    ```
 
-3. Make it executable and move it into your `$PATH`:
+4. You’ll end up with `ebenlib.exe`.
+   To test:
 
-   ```bash
-   chmod +x ebenlib
-   sudo mv ebenlib /usr/local/bin/
+   ```powershell
+   .\ebenlib.exe --interactive
    ```
 
-Now you can run:
+> _Optional icon injection_ uses Resource Hacker if installed under
+> `C:\Program Files (x86)\Resource Hacker\ResourceHacker.exe`.
+
+#### ⭑ Fat-Jar Only
+
+If you prefer a single JAR (no native-image):
 
 ```bash
-ebenlib --help
-ebenlib auth signin
-ebenlib --interactive
+./gradlew clean jar
+java -jar app/build/libs/app.jar --interactive
 ```
 
 ---
@@ -61,7 +78,7 @@ ebenlib --interactive
 ## 📚 Command Reference
 
 ```text
-ebenlib <command> [options]
+ebenlib <category> <command>
 ```
 
 ### Core Commands
@@ -104,6 +121,8 @@ ebenlib <command> [options]
 | `test`             | Run the built‑in console UI tests                                 |
 | `--help`, `-h`     | Show this help message                                            |
 
+_Use `ebenlib <category> <command> --help` for detailed usage._
+
 ---
 
 ### 🔧 Examples
@@ -134,25 +153,66 @@ ebenlib --interactive
 
 ```java
 
+
 ./Library-Management-System/*
         ├─ app/*
         |       ├─ src/*
         |       |       ├─ main/*
         |       |       |       ├─ java/*
-        |       |       |       |       └─ org/*
-        |       |       |       |               └─ ebenlib/*
-        |       |       |       |               ├─ cli/*
-        |       |       |       |               |       ├─ AuthHandler.java
-        |       |       |       |               |       ├─ CommandRouter.java
-        |       |       |       |               |       ├─ ConsoleThemeTest.java
-        |       |       |       |               |       ├─ ConsoleUI.java
-        |       |       |       |               |       ├─ InteractiveMenus.java
-        |       |       |       |               |       ├─ InteractiveShell.java
-        |       |       |       |               |       ├─ TablePrinter.java
-        |       |       |       |               |       └─ User.java
-        |       |       |       |               └─ App.java
+        |       |       |       |       ├─ org/*
+        |       |       |       |       |       └─ ebenlib/*
+        |       |       |       |       |               ├─ book/*
+        |       |       |       |       |               |       ├─ Book.java
+        |       |       |       |       |               |       ├─ BookHandler.java
+        |       |       |       |       |               |       ├─ BookService.java
+        |       |       |       |       |               |       └─ BookStats.java
+        |       |       |       |       |               ├─ borrow/*
+        |       |       |       |       |               |       ├─ BorrowHandler.java
+        |       |       |       |       |               |       ├─ BorrowRecord.java
+        |       |       |       |       |               |       ├─ BorrowSettings.java
+        |       |       |       |       |               |       ├─ BorrowStore.java
+        |       |       |       |       |               |       └─ Status.java
+        |       |       |       |       |               ├─ cli/*
+        |       |       |       |       |               |       ├─ AuthHandler.java
+        |       |       |       |       |               |       ├─ CommandRouter.java
+        |       |       |       |       |               |       ├─ ConsoleThemeTest.java
+        |       |       |       |       |               |       ├─ ConsoleUI.java
+        |       |       |       |       |               |       ├─ InteractiveMenus.java
+        |       |       |       |       |               |       ├─ InteractiveShell.java
+        |       |       |       |       |               |       └─ TablePrinter.java
+        |       |       |       |       |               ├─ ds/*
+        |       |       |       |       |               |       ├─ EbenLibComparator.java
+        |       |       |       |       |               |       ├─ EbenLibFunction.java
+        |       |       |       |       |               |       ├─ EbenLibHashSet.java
+        |       |       |       |       |               |       ├─ EbenLibList.java
+        |       |       |       |       |               |       ├─ EbenLibMap.java
+        |       |       |       |       |               |       ├─ EbenLibMapEntry.java
+        |       |       |       |       |               |       ├─ EbenLibPriorityQueue.java
+        |       |       |       |       |               |       ├─ EbenLibSet.java
+        |       |       |       |       |               |       └─ EbenLibStack.java
+        |       |       |       |       |               ├─ profile/*
+        |       |       |       |       |               |       └─ ProfileHandler.java
+        |       |       |       |       |               ├─ report/*
+        |       |       |       |       |               |       └─ ReportHandler.java
+        |       |       |       |       |               ├─ searchsort/*
+        |       |       |       |       |               |       ├─ Searcher.java
+        |       |       |       |       |               |       └─ Sorter.java
+        |       |       |       |       |               ├─ system/*
+        |       |       |       |       |               |       └─ SystemHandler.java
+        |       |       |       |       |               ├─ user/*
+        |       |       |       |       |               |       ├─ Role.java
+        |       |       |       |       |               |       ├─ User.java
+        |       |       |       |       |               |       ├─ UserHandler.java
+        |       |       |       |       |               |       └─ UserStore.java
+        |       |       |       |       |               ├─ utils/*
+        |       |       |       |       |               |       └─ FileUtil.java
+        |       |       |       |       |               └─ App.java
+        |       |       |       |       └─ module-info.java
         |       |       |       └─ resources/*
-        |       |       |               ├─ session.txt
+        |       |       |               ├─ books.csv
+        |       |       |               ├─ borrows.csv
+        |       |       |               ├─ session.csv
+        |       |       |               ├─ settings.txt
         |       |       |               └─ users.csv
         |       |       └─ test/*
         |       |               ├─ java/*
@@ -160,12 +220,15 @@ ebenlib --interactive
         |       |               |               └─ ebenlib/*
         |       |               |               └─ AppTest.java
         |       |               └─ resources/*
-        |       └─ build.gradle
-        ├─ gradle/*
-        |       ├─ wrapper/*
-        |       |       ├─ gradle-wrapper.jar
-        |       |       └─ gradle-wrapper.properties
-        |       └─ libs.versions.toml
+        |       ├─ build.gradle
+        |       ├─ ebenlib.exe
+        |       └─ ebenlib.ico
+        ├─ src/*
+        |       └─ main/*
+        |               └─ resources/*
+        |               ├─ books.csv
+        |               └─ borrows.csv
+        ├─ .fttignore
         ├─ .gitattributes
         ├─ .gitignore
         ├─ demo.png
@@ -177,6 +240,25 @@ ebenlib --interactive
         └─ settings.gradle
 
 ```
+
+---
+
+## 🔧 Data Structures & Algorithms
+
+- **EbenLibList<T>**
+  _Dynamic array_ with O(1) random access, amortized O(1) append, O(n) remove.
+- **EbenLibStack<T>**
+  LIFO built on `EbenLibList`: `push`, `pop`, `peek` all O(1).
+- **EbenLibMap\<K,V>**
+  Chained-hash table: average O(1) `get`/`put`/`remove`; rehash at load > 0.75.
+- **EbenLibPriorityQueue<T>**
+  Binary-heap: O(log n) insert & remove-max/min.
+- **EbenLibHashSet<T>**
+  Wrapper over `EbenLibMap<T,Boolean>`, O(1) contains/add/remove.
+- **Binary Search**
+  O(log n) on pre-sorted `EbenLibList` via `Searcher.binarySearch`.
+- **Merge Sort**
+  O(n log n) stable sort implemented in `Sorter.mergeSort`.
 
 ---
 
@@ -196,14 +278,6 @@ ebenlib --interactive
 
 ---
 
-## ✅ What’s Next
-
-- Implement actual logic behind the **stubs** (`BookHandler`, `BorrowHandler`, etc.)
-- Add **JUnit tests** under `/test` to cover each service
-- Integrate **fine calculation**, **overdue monitoring**, and **report generation**
-
----
-
 ## 🤝 Contributing
 
 1. Fork this repo
@@ -211,5 +285,3 @@ ebenlib --interactive
 3. Commit your changes (`git commit -m "feat: add XYZ"`)
 4. Push to your branch (`git push origin feature/xyz`)
 5. Open a Pull Request
-
-Happy coding! 🚀
