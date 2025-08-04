@@ -3,6 +3,7 @@ package org.ebenlib.system;
 import org.ebenlib.cli.AuthHandler;
 import org.ebenlib.cli.ConsoleUI;
 import org.ebenlib.ds.EbenLibMap;
+import org.ebenlib.user.User;
 import org.ebenlib.utils.FileUtil;
 import org.ebenlib.borrow.BorrowSettings;
 
@@ -146,7 +147,13 @@ public class SystemHandler {
     }
 
     public static void interactiveImport() {
-        if (!AuthHandler.requirePassword(AuthHandler.getCurrentUser().getUsername())) return;
+        User currentUser = AuthHandler.getCurrentUser();
+        if (currentUser == null) {
+            System.out.println("You must be logged in to seed demo data.");
+            return;
+        }
+        String username = currentUser.getUsername();
+        if (!AuthHandler.requirePassword(username)) return;
         ConsoleUI.info("This will overwrite current data.");
         if (!ConsoleUI.confirm("Continue?")) return;
 
