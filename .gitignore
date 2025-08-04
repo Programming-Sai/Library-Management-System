@@ -26,3 +26,5 @@ replay_pid*
 build/
 resources/
 *.csv
+!Group 6 - EbenLib (Library Management System).zip
+!gradle-wrapper.jar
