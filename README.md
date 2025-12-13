@@ -10,7 +10,8 @@
 
 # EbenLib Library Management System
 
-A robust Java-based, offline-first library management CLI that enforces data integrity, borrow/return rules, and user roles without a database. Implements core data structures (dynamic arrays, hash maps, priority queues) and algorithms (binary search, merge sort) for efficient operations. Features an interactive menu-driven console UI with ANSI theming, spinners, and pagination. Packaged as a native Windows binary using GraalVM for fast startup.
+<p> A robust Java-based, offline-first library management CLI that enforces data integrity, borrow/return rules, and user roles without a database. Implements core data structures (dynamic arrays, hash maps, priority queues) and algorithms (binary search, merge sort) for efficient operations. Features an interactive menu-driven console UI with ANSI theming, spinners, and pagination. Packaged as a native Windows binary using GraalVM for fast startup.</p>
+
 ---
 
 ## 🚀 Quick Start
